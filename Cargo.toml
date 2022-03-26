@@ -1,0 +1,21 @@
+[package]
+name = "onitama-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+bevy = "0.6.1"
+board_plugin = { path = "board_plugin" }
+
+# Hierarchy inspector debug
+bevy-inspector-egui = { version = "0.8", optional = true }
+
+[workspace]
+members = [
+    "board_plugin"
+]
+
+[features]
+default = []
+debug = ["board_plugin/debug", "bevy-inspector-egui"]
