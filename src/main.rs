@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+use board_plugin::BoardPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -12,7 +13,8 @@ fn main() {
         title: "Onitama in Rust".to_string(),
         ..Default::default()
     })
-    .add_plugins(DefaultPlugins);
+    .add_plugins(DefaultPlugins)
+    .add_plugin(BoardPlugin);
 
     #[cfg(feature = "debug")]
     app.add_plugin(WorldInspectorPlugin::new());
