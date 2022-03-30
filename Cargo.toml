@@ -5,11 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-bevy = "0.6.1"
 board_plugin = { path = "board_plugin" }
 
 # Hierarchy inspector debug
-bevy-inspector-egui = { version = "0.8", optional = true }
+bevy-inspector-egui = { version = "0.9", optional = true }
 
 [workspace]
 members = [
@@ -19,3 +18,25 @@ members = [
 [features]
 default = []
 debug = ["board_plugin/debug", "bevy-inspector-egui"]
+
+# Enable optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+# Maybe also enable only a small amount of optimization for our code:
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+strip = "debuginfo"
+lto = "thin"
+
+[dependencies.bevy]
+version = "0.6.1"
+default-features = false
+features = ["render", "bevy_winit", "png"]
+
+# Dependencies for native only.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.bevy]
+version = "0.6.1"
+default-features = false
