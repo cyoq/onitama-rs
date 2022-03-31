@@ -1,22 +1,34 @@
 #[cfg(feature = "debug")]
 use colored::Colorize;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Tile {
-    Empty,
-    Pawn,
-    King,
+use crate::components::pieces::Piece;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Tile {
+    piece: Option<Piece>,
 }
 
 impl Tile {
+    pub fn new(piece: Option<Piece>) -> Self {
+        Self { piece }
+    }
+
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
+        use crate::components::pieces::PieceColor::*;
+        use crate::components::pieces::PieceKind::*;
         format!(
             "{}",
-            match self {
-                Tile::King => "R".bright_red(),
-                Tile::Pawn => "r".bright_red(),
-                Tile::Empty => " ".normal(),
+            match self.piece {
+                Some(piece) => {
+                    match (piece.color, piece.kind) {
+                        (Blue, King) => "B".cyan(),
+                        (Blue, Pawn) => "b".cyan(),
+                        (Red, King) => "R".bright_red(),
+                        (Red, Pawn) => "r".bright_red(),
+                    }
+                }
+                None => " ".normal(),
             }
         )
     }

@@ -1,3 +1,4 @@
+use crate::components::pieces::{Piece, PieceColor::*, PieceKind::*};
 use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
@@ -16,13 +17,49 @@ impl Board {
     pub fn new() -> Self {
         let height = BOARD_SIZE as u8;
         let width = BOARD_SIZE as u8;
-        use Tile::*;
+
+        let blue_pawn = Piece::new(Pawn, Blue);
+        let blue_king = Piece::new(King, Blue);
+
+        let red_pawn = Piece::new(Pawn, Red);
+        let red_king = Piece::new(King, Red);
+
         let map = [
-            [Pawn, Pawn, King, Pawn, Pawn],
-            [Empty, Empty, Empty, Empty, Empty],
-            [Empty, Empty, Empty, Empty, Empty],
-            [Empty, Empty, Empty, Empty, Empty],
-            [Pawn, Pawn, King, Pawn, Pawn],
+            [
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_king)),
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_pawn.clone())),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(Some(red_pawn.clone())),
+                Tile::new(Some(red_pawn.clone())),
+                Tile::new(Some(red_king)),
+                Tile::new(Some(red_pawn.clone())),
+                Tile::new(Some(red_pawn.clone())),
+            ],
         ];
 
         Self { height, width, map }
