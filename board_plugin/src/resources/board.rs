@@ -9,7 +9,7 @@ const BOARD_SIZE: usize = 5;
 pub struct Board {
     height: u8,
     width: u8,
-    map: [[Tile; BOARD_SIZE]; BOARD_SIZE],
+    pub map: [[Tile; BOARD_SIZE]; BOARD_SIZE],
 }
 
 impl Board {

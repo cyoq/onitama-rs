@@ -5,7 +5,7 @@ use crate::components::pieces::Piece;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Tile {
-    piece: Option<Piece>,
+    pub piece: Option<Piece>,
 }
 
 impl Tile {

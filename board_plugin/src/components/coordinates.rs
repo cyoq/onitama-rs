@@ -36,3 +36,13 @@ impl Display for Coordinates {
         write!(f, "({}, {})", self.x, self.y)
     }
 }
+
+impl Add<(i8, i8)> for Coordinates {
+    type Output = Self;
+
+    fn add(self, (x, y): (i8, i8)) -> Self::Output {
+        let x = ((self.x as i8) + x as i8) as u8;
+        let y = ((self.y as i8) + y as i8) as u8;
+        Self { x, y }
+    }
+}
