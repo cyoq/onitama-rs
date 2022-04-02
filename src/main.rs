@@ -3,7 +3,8 @@ use bevy::prelude::*;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
-use board_plugin::resources::board_options::BoardOptions;
+use board_plugin::resources::board_options::{BoardOptions, TileSize};
+use board_plugin::resources::deck_options::DeckOptions;
 use board_plugin::BoardPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -16,7 +17,7 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(WindowDescriptor {
-        width: 800.,
+        width: 1200.,
         height: 700.,
         title: "Onitama in Rust".to_string(),
         ..Default::default()
@@ -49,8 +50,17 @@ fn setup_board(
     // Board plugin options
     commands.insert_resource(BoardOptions {
         tile_padding: 3.0,
-        position: Vec3::new(-300.0, -200.0, 0.),
+        position: Vec3::new(-550.0, -230.0, 0.),
         ..Default::default()
+    });
+
+    commands.insert_resource(DeckOptions {
+        tile_padding: 3.0,
+        position: Vec3::new(350.0, 30., 0.),
+        tile_size: TileSize::Adaptive {
+            min: 10.0,
+            max: 30.0,
+        },
     });
     // Board assets
     commands.insert_resource(BoardAssets {
@@ -68,7 +78,7 @@ fn setup_board(
             ..Default::default()
         },
         blue_king_material: SpriteMaterial {
-            texture: asset_server.load("sprites/hat.png"),
+            texture: asset_server.load("sprites/star.png"),
             color: Color::BLUE,
         },
         red_pawn_material: SpriteMaterial {
@@ -76,8 +86,16 @@ fn setup_board(
             ..Default::default()
         },
         red_king_material: SpriteMaterial {
-            texture: asset_server.load("sprites/hat.png"),
+            texture: asset_server.load("sprites/star.png"),
             color: Color::RED,
+        },
+        deck_card_center_material: SpriteMaterial {
+            color: Color::WHITE,
+            ..Default::default()
+        },
+        deck_card_allowed_move_material: SpriteMaterial {
+            color: Color::OLIVE,
+            ..Default::default()
         },
         font: asset_server.load("fonts/pixeled.ttf"),
     });

@@ -35,6 +35,10 @@ pub struct BoardAssets {
     pub red_pawn_material: SpriteMaterial,
     ///
     pub red_king_material: SpriteMaterial,
+    /// Material for the center point in the Card board
+    pub deck_card_center_material: SpriteMaterial,
+    ///
+    pub deck_card_allowed_move_material: SpriteMaterial,
     ///
     pub font: Handle<Font>,
 }
