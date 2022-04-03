@@ -17,8 +17,8 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(WindowDescriptor {
-        width: 1200.,
-        height: 700.,
+        width: 1280.,
+        height: 720.,
         title: "Onitama in Rust".to_string(),
         ..Default::default()
     })
@@ -32,6 +32,7 @@ fn main() {
 
     #[cfg(feature = "debug")]
     app.add_plugin(WorldInspectorPlugin::new());
+    app.insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.1)));
 
     app.add_startup_system(camera_setup);
 

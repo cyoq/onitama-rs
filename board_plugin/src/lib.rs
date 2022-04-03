@@ -5,12 +5,12 @@ pub mod systems;
 use bevy::ecs::schedule::StateData;
 use bevy::log;
 use bevy::prelude::*;
+use components::card::Card;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceColor, PieceKind};
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
-use resources::card::Card;
 use resources::deck_options::DeckOptions;
 
 use crate::resources::board_options::TileSize;
@@ -107,23 +107,25 @@ impl<T> BoardPlugin<T> {
 
         log::info!("one board size from the deck: {}", board_size);
 
-        commands
-            .spawn()
-            .insert(Name::new("Deck"))
-            .insert(Transform::from_translation(deck_options.position))
-            .insert(GlobalTransform::default())
-            .with_children(|parent| {
-                let offset = board_size / 4.;
-                let deck_pos = Vec2::new(board_size.x - offset.x, board_size.y + offset.y);
-                let positions = [
-                    Vec2::new(0., 0.),
-                    Vec2::new(-deck_pos.x, -deck_pos.y),
-                    Vec2::new(-deck_pos.x, deck_pos.y),
-                    Vec2::new(deck_pos.x, deck_pos.y),
-                    Vec2::new(deck_pos.x, -deck_pos.y),
-                ];
-                for i in 0..5 {
-                    Self::spawn_deck_board(
+        let offset = board_size / 4.;
+        let deck_pos = Vec2::new(board_size.x - offset.x, board_size.y + offset.y);
+
+        let positions = [
+            Vec2::new(0., 0.),
+            Vec2::new(-deck_pos.x, -deck_pos.y),
+            Vec2::new(-deck_pos.x, deck_pos.y),
+            Vec2::new(deck_pos.x, deck_pos.y),
+            Vec2::new(deck_pos.x, -deck_pos.y),
+        ];
+
+        for i in 0..5 {
+            commands
+                .spawn()
+                .insert(Name::new(format!("Card {}", deck.cards[i].name)))
+                .insert(Transform::from_translation(deck_options.position))
+                .insert(GlobalTransform::default())
+                .with_children(|parent| {
+                    Self::spawn_deck_card_board(
                         parent,
                         board_size,
                         positions[i],
@@ -132,8 +134,8 @@ impl<T> BoardPlugin<T> {
                         deck_options.tile_padding,
                         tile_size,
                     );
-                }
-            });
+                });
+        }
     }
 
     pub fn adaptive_tile_size(
@@ -159,6 +161,34 @@ impl<T> BoardPlugin<T> {
                     x: x as u8,
                     y: y as u8,
                 };
+
+                // print letters to the left of the board
+                if coordinates.x == 0 {
+                    Self::spawn_text(
+                        parent,
+                        String::from((101 - y) as u8 as char),
+                        board_assets,
+                        tile_size,
+                        Vec2::new(
+                            (x as f32 * tile_size) - (tile_size / 4.),
+                            (y as f32 * tile_size) + (tile_size / 8.),
+                        ),
+                    );
+                }
+
+                // print numbers below the board
+                if coordinates.y == 0 {
+                    Self::spawn_text(
+                        parent,
+                        (x + 1).to_string(),
+                        board_assets,
+                        tile_size,
+                        Vec2::new(
+                            (x as f32 * tile_size) + (tile_size / 2.),
+                            (y as f32 * tile_size) - (tile_size / 1.5) - 10.,
+                        ),
+                    );
+                }
 
                 // Creating a tile on the board
                 let mut cmd = parent.spawn();
@@ -248,7 +278,34 @@ impl<T> BoardPlugin<T> {
         }
     }
 
-    fn spawn_deck_board(
+    fn spawn_text(
+        parent: &mut ChildBuilder,
+        text: String,
+        board_assets: &BoardAssets,
+        tile_size: f32,
+        position: Vec2,
+    ) {
+        parent.spawn_bundle(Text2dBundle {
+            text: Text {
+                sections: vec![TextSection {
+                    value: text,
+                    style: TextStyle {
+                        color: Color::WHITE,
+                        font: board_assets.font.clone(),
+                        font_size: tile_size,
+                    },
+                }],
+                alignment: TextAlignment {
+                    vertical: VerticalAlign::Bottom,
+                    horizontal: HorizontalAlign::Center,
+                },
+            },
+            transform: Transform::from_xyz(position.x, position.y, 1.),
+            ..Default::default()
+        });
+    }
+
+    fn spawn_deck_card_board(
         parent: &mut ChildBuilder,
         board_size: Vec2,
         position: Vec2,
@@ -269,29 +326,30 @@ impl<T> BoardPlugin<T> {
                 ..Default::default()
             })
             .insert(Name::new(format!("Background {}", card.name)));
-        // .insert_bundle(Text2dBundle {
-        //     text: Text {
-        //         sections: vec![TextSection {
-        //             value: card.name.to_owned(),
-        //             style: TextStyle {
-        //                 color: Color::WHITE,
-        //                 font: board_assets.font.clone(),
-        //                 font_size: tile_size - padding,
-        //             },
-        //         }],
-        //         alignment: TextAlignment {
-        //             vertical: VerticalAlign::Bottom,
-        //             horizontal: HorizontalAlign::Center,
-        //         },
-        //     },
-        //     transform: Transform::from_xyz(
-        //         board_size.x / 2. + position.x,
-        //         board_size.y / 2. + position.y,
-        //         1.,
-        //     ),
-        //     ..Default::default()
-        // });
 
+        // spawn card name below the board
+        parent
+            .spawn_bundle(Text2dBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: card.name.to_owned(),
+                        style: TextStyle {
+                            color: Color::WHITE,
+                            font: board_assets.font.clone(),
+                            font_size: tile_size - padding,
+                        },
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Bottom,
+                        horizontal: HorizontalAlign::Center,
+                    },
+                },
+                transform: Transform::from_xyz(position.x, -board_size.y / 1.5 + position.y, 1.),
+                ..Default::default()
+            })
+            .insert(Name::new(format!("Card title: {}", card.name)));
+
+        // Calculate the coordinates for the possible moves
         let center = Coordinates { x: 2, y: 2 };
         let move_tiles = card
             .directions
@@ -299,18 +357,20 @@ impl<T> BoardPlugin<T> {
             .map(|tuple| center + *tuple)
             .collect::<Vec<_>>();
 
-        // spawn tiles for the card
+        // spawn tiles for the card board
         for x in 0..5u8 {
             for y in 0..5u8 {
                 let coordinates = Coordinates { x, y };
 
                 let mut tile_color;
+                // highlight the center
                 if (x, y) == (2, 2) {
                     tile_color = board_assets.deck_card_center_material.color;
                 } else {
                     tile_color = board_assets.tile_material.color;
                 }
 
+                // highlight possible moves
                 if move_tiles.contains(&coordinates) {
                     tile_color = board_assets.deck_card_allowed_move_material.color;
                 }
