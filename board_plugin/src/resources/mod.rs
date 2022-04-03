@@ -4,3 +4,5 @@ pub mod board_options;
 pub mod board_assets;
 pub mod deck;
 pub mod deck_options;
+pub mod tile_map;
+pub mod card;

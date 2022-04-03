@@ -4,7 +4,7 @@ pub enum Edition {
     SenseisPath,
 }
 
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone)]
 pub struct Card<'a> {
     pub edition: Edition,
     pub directions: &'a [(i8, i8)],
@@ -64,5 +64,3 @@ pub const CARDS: [Card; 5] = [
 // const ROOSTER: Card = Card::new(Edition::Original, &[-1, 0, -1, -1, 1, 0, 1, 1], "Rooster");
 // const OX: Card = Card::new(Edition::Original, &[0, 1, 0, -1, 1, 0], "Ox");
 // const COBRA: Card = Card::new(Edition::Original, &[-1, 0, 1, -1, 1, 1], "Cobra");
-
-use bevy::prelude::Component;

@@ -1,11 +1,14 @@
+pub mod bounds;
 pub mod components;
+pub mod events;
 pub mod resources;
 pub mod systems;
 
 use bevy::ecs::schedule::StateData;
 use bevy::log;
+use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
-use components::card::Card;
+use resources::card::Card;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceColor, PieceKind};
 use resources::board::Board;
@@ -13,8 +16,12 @@ use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::deck_options::DeckOptions;
 
+use crate::bounds::Bounds2;
+use crate::components::card_index::CardIndex;
+use crate::events::TileTriggerEvent;
 use crate::resources::board_options::TileSize;
 use crate::resources::deck::Deck;
+use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
 
@@ -44,21 +51,21 @@ impl<T> BoardPlugin<T> {
             None => Default::default(),
         };
 
-        let board = Board::new();
+        let tile_map = TileMap::new();
         let deck = Deck::new();
         #[cfg(feature = "debug")]
-        log::info!("{}", board.console_output());
+        log::info!("{}", tile_map.console_output());
 
         let tile_size = match options.tile_size {
             TileSize::Fixed(size) => size,
             TileSize::Adaptive { min, max } => {
-                Self::adaptive_tile_size(&window, (min, max), (board.width(), board.height()))
+                Self::adaptive_tile_size(&window, (min, max), (tile_map.width(), tile_map.height()))
             }
         };
 
         let board_size = Vec2::new(
-            board.width() as f32 * tile_size,
-            board.height() as f32 * tile_size,
+            tile_map.width() as f32 * tile_size,
+            tile_map.height() as f32 * tile_size,
         );
         log::info!("board size: {}", board_size);
 
@@ -82,27 +89,35 @@ impl<T> BoardPlugin<T> {
 
                 Self::spawn_board(
                     parent,
-                    &board,
+                    &tile_map,
                     tile_size,
                     options.tile_padding,
                     &board_assets,
                 );
             });
 
-        // Spawn boards with cards movements
+        commands.insert_resource(Board {
+            bounds: Bounds2 {
+                position: options.position.xy(),
+                size: board_size,
+            },
+            tile_size,
+            tile_map,
+        });
 
+        // Spawn boards with cards movements
         let tile_size = match deck_options.tile_size {
             TileSize::Fixed(size) => size,
             TileSize::Adaptive { min, max } => {
-                Self::adaptive_tile_size(&window, (min, max), (board.width(), board.height()))
+                Self::adaptive_tile_size(&window, (min, max), (tile_map.width(), tile_map.height()))
             }
         };
 
         log::info!("deck card tile size: {}", tile_size);
 
         let board_size = Vec2::new(
-            board.width() as f32 * tile_size,
-            board.height() as f32 * tile_size,
+            tile_map.width() as f32 * tile_size,
+            tile_map.height() as f32 * tile_size,
         );
 
         log::info!("one board size from the deck: {}", board_size);
@@ -124,6 +139,7 @@ impl<T> BoardPlugin<T> {
                 .insert(Name::new(format!("Card {}", deck.cards[i].name)))
                 .insert(Transform::from_translation(deck_options.position))
                 .insert(GlobalTransform::default())
+                .insert(CardIndex(i as u8))
                 .with_children(|parent| {
                     Self::spawn_deck_card_board(
                         parent,
@@ -136,6 +152,26 @@ impl<T> BoardPlugin<T> {
                     );
                 });
         }
+
+        // Spawn a guide text
+        commands
+            .spawn()
+            .insert(Name::new("Guide text"))
+            .insert(Transform::from_translation(Vec3::new(
+                0.0,
+                window.height / 2.4 as f32,
+                1.,
+            )))
+            .insert(GlobalTransform::default())
+            .with_children(|parent| {
+                Self::spawn_text(
+                    parent,
+                    "Red to move. Select a card".to_owned(),
+                    &board_assets,
+                    80.,
+                    Vec2::new(0., 0.),
+                );
+            });
     }
 
     pub fn adaptive_tile_size(
@@ -150,7 +186,7 @@ impl<T> BoardPlugin<T> {
 
     fn spawn_board(
         parent: &mut ChildBuilder,
-        board: &Board,
+        board: &TileMap,
         tile_size: f32,
         padding: f32,
         board_assets: &BoardAssets,
@@ -407,6 +443,12 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_system_set(
             SystemSet::on_enter(self.running_state.clone()).with_system(Self::create_board),
         );
+        app.add_system_set(
+            SystemSet::on_update(self.running_state.clone())
+                .with_system(systems::board_input::input_handling),
+        );
+        app.add_event::<TileTriggerEvent>();
+
         log::info!("Loaded Board Plugin");
 
         #[cfg(feature = "debug")]
@@ -419,6 +461,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             registry.register::<Piece>();
             registry.register::<PieceColor>();
             registry.register::<PieceKind>();
+            registry.register::<CardIndex>();
         }
     }
 }

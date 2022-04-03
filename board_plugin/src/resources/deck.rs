@@ -1,4 +1,5 @@
-use crate::components::card::{Card, CARDS};
+use super::card::{Card, CARDS};
+
 
 #[derive(Debug)]
 pub struct Deck<'a> {
