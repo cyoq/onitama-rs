@@ -8,19 +8,23 @@ use bevy::ecs::schedule::StateData;
 use bevy::log;
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
-use resources::card::Card;
+use components::background::Background;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceColor, PieceKind};
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
+use resources::card::Card;
 use resources::deck_options::DeckOptions;
 
 use crate::bounds::Bounds2;
+use crate::components::card_board::CardBoard;
 use crate::components::card_index::CardIndex;
-use crate::events::TileTriggerEvent;
+use crate::events::{TileTriggerEvent, ColorSelectedCard, ResetSelectedCardColor};
 use crate::resources::board_options::TileSize;
+use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
+use crate::resources::selected_card::SelectedCard;
 use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
@@ -52,7 +56,6 @@ impl<T> BoardPlugin<T> {
         };
 
         let tile_map = TileMap::new();
-        let deck = Deck::new();
         #[cfg(feature = "debug")]
         log::info!("{}", tile_map.console_output());
 
@@ -133,25 +136,51 @@ impl<T> BoardPlugin<T> {
             Vec2::new(deck_pos.x, -deck_pos.y),
         ];
 
+        let cards = [
+            CARDS[0].clone(),
+            CARDS[1].clone(),
+            CARDS[2].clone(),
+            CARDS[3].clone(),
+            CARDS[4].clone(),
+        ];
+
+        let mut deck_temp = Vec::with_capacity(5);
+
         for i in 0..5 {
-            commands
+            let card_board_entity = commands
                 .spawn()
-                .insert(Name::new(format!("Card {}", deck.cards[i].name)))
+                .insert(Name::new(format!("Card {}", cards[i].name)))
+                .insert(CardIndex(i as u8))
                 .insert(Transform::from_translation(deck_options.position))
                 .insert(GlobalTransform::default())
-                .insert(CardIndex(i as u8))
                 .with_children(|parent| {
                     Self::spawn_deck_card_board(
                         parent,
                         board_size,
                         positions[i],
-                        &deck.cards[i],
+                        &cards[i],
                         &board_assets,
                         deck_options.tile_padding,
                         tile_size,
                     );
-                });
+                })
+                .id();
+
+            deck_temp.push(CardBoard {
+                card: CARDS[i].clone(),
+                bounds: Bounds2 {
+                    size: board_size,
+                    position: positions[i] + deck_options.position.xy() - board_size / 2.,
+                },
+                entity: card_board_entity,
+            });
         }
+
+        commands.insert_resource(Deck {
+            cardboards: deck_temp.try_into().unwrap(),
+        });
+
+        commands.insert_resource(SelectedCard(None));
 
         // Spawn a guide text
         commands
@@ -361,7 +390,8 @@ impl<T> BoardPlugin<T> {
                 transform: Transform::from_xyz(position.x, position.y, 0.),
                 ..Default::default()
             })
-            .insert(Name::new(format!("Background {}", card.name)));
+            .insert(Name::new(format!("Background {}", card.name)))
+            .insert(Background);
 
         // spawn card name below the board
         parent
@@ -445,9 +475,15 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         );
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
-                .with_system(systems::board_input::input_handling),
+                .with_system(systems::board_input::input_handling)
+                // .with_system(systems::card_input::card_input_handling)
+                .with_system(systems::card_input::card_selection_handling)
+                .with_system(systems::card_input::reset_selected_card_color)
+                .with_system(systems::card_input::color_selected_card),
         );
         app.add_event::<TileTriggerEvent>();
+        app.add_event::<ColorSelectedCard>();
+        app.add_event::<ResetSelectedCardColor>();
 
         log::info!("Loaded Board Plugin");
 
@@ -462,6 +498,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             registry.register::<PieceColor>();
             registry.register::<PieceKind>();
             registry.register::<CardIndex>();
+            registry.register::<CardBoard>();
+            registry.register::<Entity>();
         }
     }
 }

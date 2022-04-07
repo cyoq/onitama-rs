@@ -6,3 +6,4 @@ pub mod deck;
 pub mod deck_options;
 pub mod tile_map;
 pub mod card;
+pub mod selected_card;

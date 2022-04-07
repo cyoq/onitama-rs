@@ -5,6 +5,7 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
+use board_plugin::resources::selected_card::SelectedCard;
 use board_plugin::BoardPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -32,6 +33,7 @@ fn main() {
 
     #[cfg(feature = "debug")]
     app.add_plugin(WorldInspectorPlugin::new());
+
     app.insert_resource(ClearColor(Color::rgb(0.1, 0.1, 0.1)));
 
     app.add_startup_system(camera_setup);
@@ -63,6 +65,9 @@ fn setup_board(
             max: 30.0,
         },
     });
+
+    // commands.insert_resource(SelectedCard);
+
     // Board assets
     commands.insert_resource(BoardAssets {
         label: "Default".to_string(),
