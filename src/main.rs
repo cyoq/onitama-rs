@@ -5,7 +5,6 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
-use board_plugin::resources::selected_card::SelectedCard;
 use board_plugin::BoardPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -103,6 +102,11 @@ fn setup_board(
             color: Color::OLIVE,
             ..Default::default()
         },
+        selected_card_material: SpriteMaterial {
+            color: Color::rgb_u8(255, 154, 154),
+            ..Default::default()
+        },
+        guide_text_size: 80.,
         font: asset_server.load("fonts/pixeled.ttf"),
     });
     // Plugin activation

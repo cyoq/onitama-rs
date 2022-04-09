@@ -40,5 +40,9 @@ pub struct BoardAssets {
     ///
     pub deck_card_allowed_move_material: SpriteMaterial,
     ///
+    pub selected_card_material: SpriteMaterial,
+    ///
+    pub guide_text_size: f32,
+    ///
     pub font: Handle<Font>,
 }

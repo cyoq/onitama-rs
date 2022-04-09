@@ -1,6 +1,9 @@
 use crate::components::{card_index::CardIndex, coordinates::Coordinates};
 use bevy::prelude::*;
 
+#[derive(Debug, Clone)]
+pub struct ChangeGuideText(pub String);
+
 #[derive(Debug, Clone, Copy)]
 pub struct TileTriggerEvent(pub Coordinates);
 

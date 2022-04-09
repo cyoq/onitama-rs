@@ -1,4 +1,5 @@
-use crate::events::TileTriggerEvent;
+use crate::events::{ChangeGuideText, TileTriggerEvent};
+use crate::resources::selected::SelectedCard;
 use crate::Board;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
 use bevy::log;
@@ -31,6 +32,20 @@ pub fn input_handling(
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn color_selected_tile(
+    selected_card: Res<SelectedCard>,
+    mut tile_trigger_event_rdr: EventReader<TileTriggerEvent>,
+    mut change_guide_text_ewr: EventWriter<ChangeGuideText>,
+) {
+    for event in tile_trigger_event_rdr.iter() {
+        log::info!("reading events");
+        if selected_card.0 == None {
+            change_guide_text_ewr.send(ChangeGuideText("Please, select a card first!".to_owned()));
+            return;
         }
     }
 }

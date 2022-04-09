@@ -8,3 +8,6 @@ impl Default for SelectedCard {
         Self(None)
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct SelectedTile(pub Option<Entity>);

@@ -20,11 +20,12 @@ use resources::deck_options::DeckOptions;
 use crate::bounds::Bounds2;
 use crate::components::card_board::CardBoard;
 use crate::components::card_index::CardIndex;
-use crate::events::{TileTriggerEvent, ColorSelectedCard, ResetSelectedCardColor};
+use crate::components::guide::GuideText;
+use crate::events::{ChangeGuideText, ColorSelectedCard, ResetSelectedCardColor, TileTriggerEvent};
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
-use crate::resources::selected_card::SelectedCard;
+use crate::resources::selected::SelectedCard;
 use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
@@ -186,6 +187,7 @@ impl<T> BoardPlugin<T> {
         commands
             .spawn()
             .insert(Name::new("Guide text"))
+            .insert(GuideText)
             .insert(Transform::from_translation(Vec3::new(
                 0.0,
                 window.height / 2.4 as f32,
@@ -197,7 +199,7 @@ impl<T> BoardPlugin<T> {
                     parent,
                     "Red to move. Select a card".to_owned(),
                     &board_assets,
-                    80.,
+                    board_assets.guide_text_size,
                     Vec2::new(0., 0.),
                 );
             });
@@ -476,14 +478,16 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
                 .with_system(systems::board_input::input_handling)
-                // .with_system(systems::card_input::card_input_handling)
+                .with_system(systems::board_input::color_selected_tile)
                 .with_system(systems::card_input::card_selection_handling)
+                .with_system(systems::guide_text_change::process_guide_text)
                 .with_system(systems::card_input::reset_selected_card_color)
                 .with_system(systems::card_input::color_selected_card),
         );
         app.add_event::<TileTriggerEvent>();
         app.add_event::<ColorSelectedCard>();
         app.add_event::<ResetSelectedCardColor>();
+        app.add_event::<ChangeGuideText>();
 
         log::info!("Loaded Board Plugin");
 
