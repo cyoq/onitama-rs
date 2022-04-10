@@ -2,14 +2,14 @@ use bevy::{log, prelude::EventReader};
 
 use crate::{
     components::{guide::GuideText, guide_text_timer::GuideTextTimer},
-    events::ChangeGuideText,
+    events::ChangeGuideTextEvent,
     resources::board_assets::BoardAssets,
 };
 
 use bevy::prelude::*;
 
 pub fn process_guide_text(
-    mut change_guide_text_rdr: EventReader<ChangeGuideText>,
+    mut change_guide_text_rdr: EventReader<ChangeGuideTextEvent>,
     // query all children of the parents with GuideText component(mut be only one parent)
     parents: Query<&Children, With<GuideText>>,
     // get children of that parent
@@ -48,13 +48,13 @@ pub fn process_guide_text_change_timer(
     mut commands: Commands,
     time: Res<Time>,
     mut timer_q: Query<(Entity, &mut GuideTextTimer)>,
-    mut change_guide_text_ewr: EventWriter<ChangeGuideText>,
+    mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
 ) {
     for (entity, mut timer) in timer_q.iter_mut() {
         timer.timer.tick(time.delta());
         if timer.timer.finished() {
             commands.entity(entity).despawn();
-            change_guide_text_ewr.send(ChangeGuideText {
+            change_guide_text_ewr.send(ChangeGuideTextEvent {
                 text: timer.old_text.clone(),
             });
         }
