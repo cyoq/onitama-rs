@@ -2,7 +2,7 @@ use crate::components::{card_index::CardIndex, coordinates::Coordinates};
 use bevy::prelude::*;
 
 #[derive(Debug, Clone)]
-pub struct ChangeGuideText {
+pub struct ChangeGuideTextEvent {
     pub text: String,
 }
 
@@ -13,10 +13,10 @@ pub struct TileTriggerEvent(pub Coordinates);
 pub struct CardTriggerEvent(pub CardIndex);
 
 #[derive(Clone, Copy)]
-pub struct ResetSelectedCardColor(pub Entity);
+pub struct ResetSelectedCardColorEvent(pub Entity);
 
 #[derive(Clone, Copy)]
-pub struct ColorSelectedCard(pub Entity);
+pub struct ColorSelectedCardEvent(pub Entity);
 
 #[derive(Clone, Copy)]
-pub struct NoCardSelected;
+pub struct NoCardSelectedEvent;

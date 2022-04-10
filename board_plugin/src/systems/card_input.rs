@@ -1,6 +1,6 @@
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
-use crate::events::{ColorSelectedCard, NoCardSelected, ResetSelectedCardColor};
+use crate::events::{ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent};
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
@@ -14,8 +14,8 @@ pub fn card_selection_handling(
     deck: Res<Deck<'static>>,
     windows: Res<Windows>,
     mouse_button_inputs: Res<Input<MouseButton>>,
-    mut color_selected_card_ewr: EventWriter<ColorSelectedCard>,
-    mut reset_selected_card_color_ewr: EventWriter<ResetSelectedCardColor>,
+    mut color_selected_card_ewr: EventWriter<ColorSelectedCardEvent>,
+    mut reset_selected_card_color_ewr: EventWriter<ResetSelectedCardColorEvent>,
 ) {
     let window = windows.get_primary().unwrap();
 
@@ -43,19 +43,19 @@ pub fn card_selection_handling(
                         }
 
                         reset_selected_card_color_ewr
-                            .send(ResetSelectedCardColor(selected_card.0.unwrap()));
+                            .send(ResetSelectedCardColorEvent(selected_card.0.unwrap()));
                         selected_card.0 = None;
                     }
                     // Set a new selected card
                     selected_card.0 = Some(card_board.entity);
-                    color_selected_card_ewr.send(ColorSelectedCard(card_board.entity));
+                    color_selected_card_ewr.send(ColorSelectedCardEvent(card_board.entity));
                     was_card_selected = true;
                 }
             }
         }
 
         if !was_card_selected && selected_card.0 != None {
-            reset_selected_card_color_ewr.send(ResetSelectedCardColor(selected_card.0.unwrap()));
+            reset_selected_card_color_ewr.send(ResetSelectedCardColorEvent(selected_card.0.unwrap()));
             selected_card.0 = None;
         }
         log::info!("Selected card entity: {:?}", selected_card.0);
@@ -65,7 +65,7 @@ pub fn card_selection_handling(
 pub fn color_selected_card(
     mut sprites: Query<&mut Sprite, With<Background>>,
     parents: Query<(Entity, &Children), With<CardIndex>>,
-    mut color_selected_card_rdr: EventReader<ColorSelectedCard>,
+    mut color_selected_card_rdr: EventReader<ColorSelectedCardEvent>,
     board_assets: Res<BoardAssets>,
 ) {
     for event in color_selected_card_rdr.iter() {
@@ -83,7 +83,7 @@ pub fn color_selected_card(
 pub fn reset_selected_card_color(
     mut sprites: Query<&mut Sprite, With<Background>>,
     parents: Query<(Entity, &Children), With<CardIndex>>,
-    mut color_selected_card_rdr: EventReader<ResetSelectedCardColor>,
+    mut color_selected_card_rdr: EventReader<ResetSelectedCardColorEvent>,
 ) {
     for event in color_selected_card_rdr.iter() {
         if let Ok((_, children)) = parents.get(event.0) {
@@ -100,7 +100,7 @@ pub fn reset_selected_card_color(
 pub fn blink_non_selected_card(
     parents: Query<&Children, With<CardIndex>>,
     mut sprites: Query<&mut Sprite, With<Background>>,
-    mut no_card_selected_rdr: EventReader<NoCardSelected>,
+    mut no_card_selected_rdr: EventReader<NoCardSelectedEvent>,
 ) {
     let colors = [Color::YELLOW, Color::WHITE, Color::YELLOW, Color::WHITE];
     for _ in no_card_selected_rdr.iter() {

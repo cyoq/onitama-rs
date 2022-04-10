@@ -22,7 +22,7 @@ use crate::components::card_board::CardBoard;
 use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
-    ChangeGuideText, ColorSelectedCard, NoCardSelected, ResetSelectedCardColor, TileTriggerEvent,
+    ChangeGuideTextEvent, ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent, TileTriggerEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -494,10 +494,10 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             // .with_system(systems::card_input::blink_non_selected_card),
         );
         app.add_event::<TileTriggerEvent>();
-        app.add_event::<ColorSelectedCard>();
-        app.add_event::<ResetSelectedCardColor>();
-        app.add_event::<ChangeGuideText>();
-        app.add_event::<NoCardSelected>();
+        app.add_event::<ColorSelectedCardEvent>();
+        app.add_event::<ResetSelectedCardColorEvent>();
+        app.add_event::<ChangeGuideTextEvent>();
+        app.add_event::<NoCardSelectedEvent>();
 
         log::info!("Loaded Board Plugin");
 

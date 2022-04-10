@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::components::guide_text_timer::GuideTextTimer;
-use crate::events::{ChangeGuideText, NoCardSelected, TileTriggerEvent};
+use crate::events::{ChangeGuideTextEvent, NoCardSelectedEvent, TileTriggerEvent};
 use crate::resources::selected::SelectedCard;
 use crate::Board;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
@@ -43,19 +43,19 @@ pub fn color_selected_tile(
     mut commands: Commands,
     selected_card: Res<SelectedCard>,
     mut tile_trigger_event_rdr: EventReader<TileTriggerEvent>,
-    mut change_guide_text_ewr: EventWriter<ChangeGuideText>,
-    mut no_card_selected_ewr: EventWriter<NoCardSelected>,
+    mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
+    mut no_card_selected_ewr: EventWriter<NoCardSelectedEvent>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
         if selected_card.0 == None {
-            change_guide_text_ewr.send(ChangeGuideText {
+            change_guide_text_ewr.send(ChangeGuideTextEvent {
                 text: "Please, select a card first!".to_owned(),
             });
             commands.spawn().insert(GuideTextTimer {
                 old_text: "Red to move. Select a card!".to_owned(),
                 timer: Timer::new(Duration::from_secs(1), false),
             });
-            no_card_selected_ewr.send(NoCardSelected);
+            no_card_selected_ewr.send(NoCardSelectedEvent);
             return;
         }
     }
