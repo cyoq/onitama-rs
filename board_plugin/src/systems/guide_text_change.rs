@@ -1,7 +1,9 @@
 use bevy::{log, prelude::EventReader};
 
 use crate::{
-    components::guide::GuideText, events::ChangeGuideText, resources::board_assets::BoardAssets,
+    components::{guide::GuideText, guide_text_timer::GuideTextTimer},
+    events::ChangeGuideText,
+    resources::board_assets::BoardAssets,
 };
 
 use bevy::prelude::*;
@@ -23,14 +25,14 @@ pub fn process_guide_text(
                 match children.get_mut(*child_entity) {
                     Ok(mut text) => {
                         text.sections = vec![TextSection {
-                            value: event.0.clone(),
+                            value: event.text.clone(),
                             style: TextStyle {
                                 color: Color::WHITE,
                                 font: board_assets.font.clone(),
                                 font_size: board_assets.guide_text_size,
                             },
                         }];
-                        log::info!("Changed a guide text to {}", event.0);
+                        log::info!("Changed a guide text to {}", event.text);
                     }
                     Err(e) => {
                         log::error!("An error in changing guide text occured: {:?}", e);
@@ -38,6 +40,23 @@ pub fn process_guide_text(
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn process_guide_text_change_timer(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut timer_q: Query<(Entity, &mut GuideTextTimer)>,
+    mut change_guide_text_ewr: EventWriter<ChangeGuideText>,
+) {
+    for (entity, mut timer) in timer_q.iter_mut() {
+        timer.timer.tick(time.delta());
+        if timer.timer.finished() {
+            commands.entity(entity).despawn();
+            change_guide_text_ewr.send(ChangeGuideText {
+                text: timer.old_text.clone(),
+            });
         }
     }
 }

@@ -489,7 +489,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .label("reset_selected_card_color")
                         .after("color_selected_card")
                         .after("color_selected_tile"),
-                ),
+                )
+                .with_system(systems::guide_text_change::process_guide_text_change_timer),
             // .with_system(systems::card_input::blink_non_selected_card),
         );
         app.add_event::<TileTriggerEvent>();

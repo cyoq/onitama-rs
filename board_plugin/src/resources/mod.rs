@@ -1,9 +1,9 @@
 pub mod board;
-pub mod tile;
-pub mod board_options;
 pub mod board_assets;
+pub mod board_options;
+pub mod card;
 pub mod deck;
 pub mod deck_options;
-pub mod tile_map;
-pub mod card;
 pub mod selected;
+pub mod tile;
+pub mod tile_map;

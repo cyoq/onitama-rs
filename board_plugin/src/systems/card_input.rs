@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
 use crate::events::{ColorSelectedCard, NoCardSelected, ResetSelectedCardColor};
