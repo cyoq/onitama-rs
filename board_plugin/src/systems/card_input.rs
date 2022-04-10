@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
-use crate::events::{ColorSelectedCard, ResetSelectedCardColor};
+use crate::events::{ColorSelectedCard, NoCardSelected, ResetSelectedCardColor};
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
@@ -91,6 +93,29 @@ pub fn reset_selected_card_color(
                 if let Ok(mut sprite) = sprites.get_mut(*child) {
                     sprite.color = Color::WHITE;
                     break;
+                }
+            }
+        }
+    }
+}
+
+pub fn blink_non_selected_card(
+    parents: Query<&Children, With<CardIndex>>,
+    mut sprites: Query<&mut Sprite, With<Background>>,
+    mut no_card_selected_rdr: EventReader<NoCardSelected>,
+) {
+    let colors = [Color::YELLOW, Color::WHITE, Color::YELLOW, Color::WHITE];
+    for _ in no_card_selected_rdr.iter() {
+        log::info!("Changing colors");
+        for children_components in parents.iter() {
+            for child_entity in children_components.iter() {
+                match sprites.get_mut(*child_entity) {
+                    Ok(mut sprite) => {
+                        for color in colors.iter() {
+                            sprite.color = *color;
+                        }
+                    }
+                    Err(e) => log::info!("Was not able to query a sprite: {:?}", e),
                 }
             }
         }

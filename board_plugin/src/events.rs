@@ -15,3 +15,6 @@ pub struct ResetSelectedCardColor(pub Entity);
 
 #[derive(Clone, Copy)]
 pub struct ColorSelectedCard(pub Entity);
+
+#[derive(Clone, Copy)]
+pub struct NoCardSelected;
