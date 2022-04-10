@@ -1,13 +1,25 @@
 use bevy::prelude::Entity;
 
+use crate::components::coordinates::Coordinates;
+
 #[derive(Debug, Clone)]
-pub struct SelectedCard(pub Option<Entity>);
+pub struct SelectedCard {
+    pub entity: Option<Entity>,
+}
 
 impl Default for SelectedCard {
     fn default() -> Self {
-        Self(None)
+        Self { entity: None }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct SelectedTile(pub Option<Entity>);
+pub struct SelectedPiece {
+    pub entity: Option<Entity>,
+}
+
+impl Default for SelectedPiece {
+    fn default() -> Self {
+        Self { entity: None }
+    }
+}

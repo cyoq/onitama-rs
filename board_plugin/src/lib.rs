@@ -22,7 +22,8 @@ use crate::components::card_board::CardBoard;
 use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent, TileTriggerEvent,
+    ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPiece, NoCardSelectedEvent,
+    PieceSelectEvent, ResetSelectedCardColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -183,7 +184,7 @@ impl<T> BoardPlugin<T> {
             cardboards: deck_temp.try_into().unwrap(),
         });
 
-        commands.insert_resource(SelectedCard(None));
+        commands.insert_resource(SelectedCard::default());
 
         // Spawn a guide text
         commands
@@ -481,7 +482,9 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             SystemSet::on_update(self.running_state.clone())
                 .with_system(systems::board_input::input_handling.label("input_handling"))
                 .with_system(systems::card_input::card_selection_handling.after("input_handling"))
-                .with_system(systems::board_input::color_selected_tile.label("color_selected_tile"))
+                .with_system(
+                    systems::board_input::process_selected_tile.label("color_selected_tile"),
+                )
                 .with_system(systems::guide_text_change::process_guide_text)
                 .with_system(systems::card_input::color_selected_card.label("color_selected_card"))
                 .with_system(
@@ -490,14 +493,15 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("color_selected_card")
                         .after("color_selected_tile"),
                 )
-                .with_system(systems::guide_text_change::process_guide_text_change_timer),
-            // .with_system(systems::card_input::blink_non_selected_card),
+                .with_system(systems::guide_text_change::process_guide_text_change_timer)
+                .with_system(systems::board_input::color_selected_piece), // .with_system(systems::card_input::blink_non_selected_card),
         );
-        app.add_event::<TileTriggerEvent>();
+        app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
         app.add_event::<ResetSelectedCardColorEvent>();
         app.add_event::<ChangeGuideTextEvent>();
         app.add_event::<NoCardSelectedEvent>();
+        app.add_event::<ColorSelectedPiece>();
 
         log::info!("Loaded Board Plugin");
 

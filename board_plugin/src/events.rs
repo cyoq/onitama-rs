@@ -7,16 +7,25 @@ pub struct ChangeGuideTextEvent {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct TileTriggerEvent(pub Coordinates);
+pub struct PieceSelectEvent(pub Coordinates);
+
+#[derive(Debug, Clone, Copy)]
+pub struct ResetSelectedPieceColor(pub Entity);
+
+#[derive(Debug, Clone, Copy)]
+pub struct ColorSelectedPiece {
+    pub entity: Entity,
+    pub coords: Coordinates
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct CardTriggerEvent(pub CardIndex);
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct ResetSelectedCardColorEvent(pub Entity);
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct ColorSelectedCardEvent(pub Entity);
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct NoCardSelectedEvent;

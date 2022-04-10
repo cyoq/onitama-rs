@@ -35,7 +35,7 @@ pub fn card_selection_handling(
             if let Some(pos) = position {
                 if card_board.in_bounds(&window, pos) {
                     // Check if there is an already selected card. Clear its color
-                    if let Some(entity) = selected_card.0 {
+                    if let Some(entity) = selected_card.entity {
                         // skip rerendering the same selected card
                         if entity == card_board.entity {
                             was_card_selected = true;
@@ -43,22 +43,22 @@ pub fn card_selection_handling(
                         }
 
                         reset_selected_card_color_ewr
-                            .send(ResetSelectedCardColorEvent(selected_card.0.unwrap()));
-                        selected_card.0 = None;
+                            .send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
+                        selected_card.entity = None;
                     }
                     // Set a new selected card
-                    selected_card.0 = Some(card_board.entity);
+                    selected_card.entity = Some(card_board.entity);
                     color_selected_card_ewr.send(ColorSelectedCardEvent(card_board.entity));
                     was_card_selected = true;
                 }
             }
         }
 
-        if !was_card_selected && selected_card.0 != None {
-            reset_selected_card_color_ewr.send(ResetSelectedCardColorEvent(selected_card.0.unwrap()));
-            selected_card.0 = None;
+        if !was_card_selected && selected_card.entity != None {
+            reset_selected_card_color_ewr.send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
+            selected_card.entity = None;
         }
-        log::info!("Selected card entity: {:?}", selected_card.0);
+        log::info!("Selected card entity: {:?}", selected_card.entity);
     }
 }
 
