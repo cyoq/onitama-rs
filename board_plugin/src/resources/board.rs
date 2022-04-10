@@ -31,4 +31,13 @@ impl Board {
             y: (coordinates.y / self.tile_size) as u8,
         })
     }
+
+    pub fn in_bounds(&self, window: &Window, position: Vec2) -> bool {
+        // Window to world space
+        let window_size = Vec2::new(window.width(), window.height());
+        let position = position - window_size / 2.;
+
+        // Bounds check
+        self.bounds.in_bounds(position)
+    }
 }

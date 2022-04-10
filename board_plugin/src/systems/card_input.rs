@@ -1,6 +1,7 @@
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
 use crate::events::{ColorSelectedCard, ResetSelectedCardColor};
+use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
 use crate::resources::selected::SelectedCard;
@@ -8,6 +9,7 @@ use bevy::log;
 use bevy::prelude::*;
 
 pub fn card_selection_handling(
+    board: Res<Board>,
     mut selected_card: ResMut<SelectedCard>,
     deck: Res<Deck<'static>>,
     windows: Res<Windows>,
@@ -21,6 +23,14 @@ pub fn card_selection_handling(
 
     if mouse_button_inputs.just_pressed(MouseButton::Left) {
         let position = window.cursor_position();
+
+        // Do not reset the selected card if the mouse position is within the board
+        if let Some(pos) = position {
+            if board.in_bounds(&window, pos) {
+                return;
+            }
+        }
+
         for card_board in deck.cardboards.iter() {
             if let Some(pos) = position {
                 if card_board.in_bounds(&window, pos) {

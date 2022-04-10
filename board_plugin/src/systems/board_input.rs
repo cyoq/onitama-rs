@@ -42,7 +42,6 @@ pub fn color_selected_tile(
     mut change_guide_text_ewr: EventWriter<ChangeGuideText>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
-        log::info!("reading events");
         if selected_card.0 == None {
             change_guide_text_ewr.send(ChangeGuideText("Please, select a card first!".to_owned()));
             return;

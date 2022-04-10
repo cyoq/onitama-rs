@@ -1,3 +1,4 @@
+use bevy::log;
 use bevy::prelude::*;
 
 #[cfg(feature = "debug")]

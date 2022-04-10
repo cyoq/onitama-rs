@@ -477,12 +477,17 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         );
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
-                .with_system(systems::board_input::input_handling)
-                .with_system(systems::board_input::color_selected_tile)
-                .with_system(systems::card_input::card_selection_handling)
+                .with_system(systems::board_input::input_handling.label("input_handling"))
+                .with_system(systems::card_input::card_selection_handling.after("input_handling"))
+                .with_system(systems::board_input::color_selected_tile.label("color_selected_tile"))
                 .with_system(systems::guide_text_change::process_guide_text)
-                .with_system(systems::card_input::reset_selected_card_color)
-                .with_system(systems::card_input::color_selected_card),
+                .with_system(systems::card_input::color_selected_card.label("color_selected_card"))
+                .with_system(
+                    systems::card_input::reset_selected_card_color
+                        .label("reset_selected_card_color")
+                        .after("color_selected_card")
+                        .after("color_selected_tile"),
+                ),
         );
         app.add_event::<TileTriggerEvent>();
         app.add_event::<ColorSelectedCard>();
