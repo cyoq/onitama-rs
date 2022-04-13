@@ -36,13 +36,13 @@ pub fn card_selection_handling(
             }
         }
 
-        for card_board in deck.cardboards.iter() {
+        for (card_board_entity, card_board) in deck.cardboards.iter() {
             if let Some(pos) = position {
                 if card_board.in_bounds(&window, pos) {
                     // Check if there is an already selected card. Clear its color
                     if let Some(entity) = selected_card.entity {
                         // skip rerendering the same selected card
-                        if entity == card_board.entity {
+                        if entity == *card_board_entity {
                             was_card_selected = true;
                             continue;
                         }
@@ -59,8 +59,8 @@ pub fn card_selection_handling(
                         }
                     }
                     // Set a new selected card
-                    selected_card.entity = Some(card_board.entity);
-                    color_selected_card_ewr.send(ColorSelectedCardEvent(card_board.entity));
+                    selected_card.entity = Some(*card_board_entity);
+                    color_selected_card_ewr.send(ColorSelectedCardEvent(*card_board_entity));
                     was_card_selected = true;
                 }
             }

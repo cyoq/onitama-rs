@@ -8,6 +8,7 @@ use bevy::ecs::schedule::StateData;
 use bevy::log;
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
+use bevy::utils::{AHashExt, HashMap};
 use components::background::Background;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceColor, PieceKind};
@@ -148,7 +149,7 @@ impl<T> BoardPlugin<T> {
             CARDS[4].clone(),
         ];
 
-        let mut deck_temp = Vec::with_capacity(5);
+        let mut deck_container = HashMap::with_capacity(5);
 
         for i in 0..5 {
             let card_board_entity = commands
@@ -170,18 +171,20 @@ impl<T> BoardPlugin<T> {
                 })
                 .id();
 
-            deck_temp.push(CardBoard {
-                card: CARDS[i].clone(),
-                bounds: Bounds2 {
-                    size: board_size,
-                    position: positions[i] + deck_options.position.xy() - board_size / 2.,
+            deck_container.insert(
+                card_board_entity,
+                CardBoard {
+                    card: CARDS[i].clone(),
+                    bounds: Bounds2 {
+                        size: board_size,
+                        position: positions[i] + deck_options.position.xy() - board_size / 2.,
+                    },
                 },
-                entity: card_board_entity,
-            });
+            );
         }
 
         commands.insert_resource(Deck {
-            cardboards: deck_temp.try_into().unwrap(),
+            cardboards: deck_container,
         });
 
         commands.insert_resource(SelectedCard::default());

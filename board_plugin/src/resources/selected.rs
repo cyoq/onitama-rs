@@ -1,7 +1,5 @@
 use bevy::prelude::Entity;
 
-use crate::components::coordinates::Coordinates;
-
 #[derive(Debug, Clone)]
 pub struct SelectedCard {
     pub entity: Option<Entity>,

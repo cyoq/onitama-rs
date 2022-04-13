@@ -8,7 +8,6 @@ pub struct CardBoard<'a> {
     #[cfg_attr(feature = "debug", inspectable(ignore))]
     pub card: Card<'a>,
     pub bounds: Bounds2,
-    pub entity: Entity,
 }
 
 impl<'a> CardBoard<'a> {

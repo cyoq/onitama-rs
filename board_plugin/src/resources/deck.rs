@@ -1,3 +1,5 @@
+use bevy::{prelude::Entity, utils::HashMap};
+
 use crate::components::card_board::CardBoard;
 
 // use super::card::{Card, CARDS};
@@ -5,7 +7,7 @@ use crate::components::card_board::CardBoard;
 
 #[derive(Debug)]
 pub struct Deck<'a> {
-    pub cardboards: [CardBoard<'a>; 5],
+    pub cardboards: HashMap<Entity, CardBoard<'a>>,
 }
 
 // impl<'a> Deck<'a> {
