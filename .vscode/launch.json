@@ -23,7 +23,7 @@
       "request": "launch",
       "name": "Debug executable 'onitama-rs'",
       "cargo": {
-        "args": ["build", "--bin=onitama-rs", "--package=onitama-rs"],
+        "args": ["build"],
         "filter": {
           "name": "onitama-rs",
           "kind": "bin"
