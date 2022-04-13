@@ -9,6 +9,7 @@ pub struct Card<'a> {
     pub edition: Edition,
     pub directions: &'a [(i8, i8)],
     pub name: &'static str,
+    pub is_mirrored: bool
 }
 
 impl<'a> Card<'a> {
@@ -17,6 +18,7 @@ impl<'a> Card<'a> {
             edition,
             directions,
             name,
+            is_mirrored: false
         }
     }
 }

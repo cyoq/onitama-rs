@@ -4,7 +4,6 @@ use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
-use super::game::PlayerColor;
 use super::game::PlayerColor::*;
 
 const BOARD_SIZE: usize = 5;
@@ -92,15 +91,20 @@ impl TileMap {
     ) -> Vec<Coordinates> {
         card.directions
             .iter()
-            .map(|tuple| *coordinates + *tuple)
+            .map(|tuple| {
+                if card.is_mirrored {
+                    *coordinates + (tuple.0, -tuple.1)
+                } else {
+                    *coordinates + *tuple
+                }
+            })
             .filter(|coords| {
                 coords.x < 5
                     && coords.y < 5
-                    && if let Some(piece) = self.map[coords.y as usize][coords.x as usize].piece {
-                        piece.color == piece.enemy()
-                    } else {
+                    && match self.map[coords.y as usize][coords.x as usize].piece {
+                        Some(piece) => piece.color == piece.enemy(),
                         // no piece - it is good to go
-                        true
+                        None => true,
                     }
             })
             .collect::<Vec<_>>()

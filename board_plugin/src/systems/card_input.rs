@@ -1,8 +1,8 @@
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
 use crate::events::{
-    ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
-    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent,
+    ResetSelectedPieceColorEvent, ResetAllowedMovesEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
@@ -76,7 +76,7 @@ pub fn card_selection_handling(
             if selected_piece.entity != None {
                 reset_selected_piece_color_ewr
                     .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
-                reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
+                            reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                 selected_piece.entity = None;
             }
         }
