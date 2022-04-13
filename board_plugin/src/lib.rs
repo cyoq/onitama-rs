@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod bounds;
 pub mod components;
 pub mod events;
@@ -12,12 +13,13 @@ use bevy::utils::{AHashExt, HashMap};
 use components::background::Background;
 use components::board_tile::BoardTile;
 use components::coordinates::Coordinates;
-use components::pieces::{Piece, PieceColor, PieceKind};
+use components::pieces::{Piece, PieceKind};
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::card::Card;
 use resources::deck_options::DeckOptions;
+use resources::game::PlayerColor;
 
 use crate::bounds::Bounds2;
 use crate::components::card_board::CardBoard;
@@ -36,8 +38,8 @@ use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
 
-use PieceColor::*;
 use PieceKind::*;
+use PlayerColor::*;
 
 pub struct BoardPlugin<T> {
     pub running_state: T,
@@ -528,7 +530,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             // registering custom component to be able to edit it in inspector
             registry.register::<Coordinates>();
             registry.register::<Piece>();
-            registry.register::<PieceColor>();
+            registry.register::<PlayerColor>();
             registry.register::<PieceKind>();
             registry.register::<CardIndex>();
             registry.register::<CardBoard>();

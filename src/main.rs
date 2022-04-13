@@ -2,14 +2,16 @@ use bevy::prelude::*;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+use board_plugin::ai::human::Human;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
 use board_plugin::BoardPlugin;
+use board_plugin::resources::game::{GameState, Player, PlayerType};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
-    InGame,
+    InProgress,
     Out,
 }
 
@@ -25,7 +27,7 @@ fn main() {
     .add_plugins(DefaultPlugins);
 
     app.add_plugin(BoardPlugin {
-        running_state: AppState::InGame,
+        running_state: AppState::InProgress,
     })
     .add_state(AppState::Out)
     .add_startup_system(setup_board);
@@ -65,7 +67,17 @@ fn setup_board(
         },
     });
 
-    // commands.insert_resource(SelectedCard);
+    let first_player = Player {
+        agent: &Human,
+        player_type: PlayerType::Human,
+    };
+
+    let second_player = Player {
+        agent: &Human,
+        player_type: PlayerType::Human,
+    };
+
+    commands.insert_resource(GameState::new(first_player, second_player));
 
     // Board assets
     commands.insert_resource(BoardAssets {
@@ -118,5 +130,5 @@ fn setup_board(
         font: asset_server.load("fonts/pixeled.ttf"),
     });
     // Plugin activation
-    state.set(AppState::InGame).unwrap();
+    state.set(AppState::InProgress).unwrap();
 }

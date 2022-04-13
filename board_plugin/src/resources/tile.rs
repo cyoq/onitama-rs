@@ -15,7 +15,7 @@ impl Tile {
 
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
-        use crate::components::pieces::PieceColor::*;
+        use crate::resources::game::PlayerColor::*;
         use crate::components::pieces::PieceKind::*;
         format!(
             "{}",

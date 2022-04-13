@@ -4,6 +4,11 @@ use crate::components::card_board::CardBoard;
 
 // use super::card::{Card, CARDS};
 
+const BLUE_FIRST_CARD_IDX: usize = 0;
+const BLUE_SECOND_CARD_IDX: usize = 1;
+const NEUTRAL_CARD_IDX: usize = 2;
+const RED_FIRST_CARD_IDX: usize = 3;
+const RED_SECOND_CARD_IDX: usize = 4;
 
 #[derive(Debug)]
 pub struct Deck<'a> {

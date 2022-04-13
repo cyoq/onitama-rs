@@ -7,3 +7,4 @@ pub mod deck_options;
 pub mod selected;
 pub mod tile;
 pub mod tile_map;
+pub mod game;

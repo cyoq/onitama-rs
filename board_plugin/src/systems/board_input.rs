@@ -4,25 +4,32 @@ use crate::components::allowed_move::AllowedMove;
 use crate::components::board_tile::BoardTile;
 use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
-use crate::components::pieces::{Piece, PieceColor, PieceKind};
+use crate::components::pieces::{Piece, PieceKind};
 use crate::events::{
     ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent, NoCardSelectedEvent,
     PieceSelectEvent, ResetAllowedMovesEvent, ResetSelectedPieceColorEvent,
 };
+use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
+use crate::resources::game::{GameState, PlayerColor, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
-use crate::Board;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
 use bevy::log;
 use bevy::prelude::*;
 
 pub fn input_handling(
+    game_state: Res<GameState<'static>>,
     windows: Res<Windows>,
     board: Res<Board>,
     mut button_evr: EventReader<MouseButtonInput>,
     mut tile_trigger_ewr: EventWriter<PieceSelectEvent>,
 ) {
+    // do not handle input when it is not a player turn
+    if game_state.get_current_player().player_type != PlayerType::Human {
+        return;
+    }
+
     let window = windows.get_primary().unwrap();
 
     for event in button_evr.iter() {
@@ -137,16 +144,16 @@ pub fn reset_selected_piece_color(
                 match sprites.get_mut(*child_entity) {
                     Ok(mut sprite) => {
                         sprite.color = match (piece.color, piece.kind) {
-                            (PieceColor::Red, PieceKind::Pawn) => {
+                            (PlayerColor::Red, PieceKind::Pawn) => {
                                 board_assets.red_pawn_material.color
                             }
-                            (PieceColor::Red, PieceKind::King) => {
+                            (PlayerColor::Red, PieceKind::King) => {
                                 board_assets.red_king_material.color
                             }
-                            (PieceColor::Blue, PieceKind::Pawn) => {
+                            (PlayerColor::Blue, PieceKind::Pawn) => {
                                 board_assets.blue_pawn_material.color
                             }
-                            (PieceColor::Blue, PieceKind::King) => {
+                            (PlayerColor::Blue, PieceKind::King) => {
                                 board_assets.blue_king_material.color
                             }
                         };
@@ -161,6 +168,7 @@ pub fn reset_selected_piece_color(
 
 pub fn generate_allowed_moves(
     mut commands: Commands,
+    game_state: Res<GameState<'static>>,
     board: Res<Board>,
     deck: Res<Deck<'static>>,
     selected_card: Res<SelectedCard>,
@@ -177,9 +185,13 @@ pub fn generate_allowed_moves(
         };
 
         let card_board = deck.cardboards.get(&card_entity).unwrap();
-        let allowed_moves = board
-            .tile_map
-            .generate_allowed_moves(&event.0, &card_board.card);
+        let allowed_moves = board.tile_map.generate_allowed_moves(
+            &event.0,
+            &card_board.card,
+            game_state.curr_color,
+        );
+
+        log::info!("Allowed moves: {:?}", allowed_moves);
 
         for (entity, coords, mut sprite) in tiles_q.iter_mut() {
             // TODO: different color for enemy piece

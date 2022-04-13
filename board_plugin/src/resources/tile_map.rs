@@ -1,9 +1,11 @@
 use crate::components::coordinates::Coordinates;
-use crate::components::pieces::{Piece, PieceColor::*, PieceKind::*};
+use crate::components::pieces::{Piece, PieceKind::*};
 use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
+use super::game::PlayerColor;
+use super::game::PlayerColor::*;
 
 const BOARD_SIZE: usize = 5;
 
@@ -87,11 +89,21 @@ impl TileMap {
         &self,
         coordinates: &Coordinates,
         card: &Card,
+        curr_color: PlayerColor,
     ) -> Vec<Coordinates> {
         card.directions
             .iter()
             .map(|tuple| *coordinates + *tuple)
-            .filter(|coords| coords.x < 5 && coords.y < 5)
+            .filter(|coords| {
+                coords.x < 5
+                    && coords.y < 5
+                    && if let Some(piece) = self.map[coords.x as usize][coords.y as usize].piece {
+                        piece.color == curr_color
+                    } else {
+                        // no piece - it is good to go
+                        true
+                    }
+            })
             .collect::<Vec<_>>()
     }
 

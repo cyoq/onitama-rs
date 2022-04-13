@@ -1,5 +1,7 @@
 use bevy::prelude::Component;
 
+use crate::resources::game::PlayerColor;
+
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum PieceKind {
@@ -8,29 +10,22 @@ pub enum PieceKind {
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum PieceColor {
-    Red,
-    Blue,
-}
-
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Component)]
 pub struct Piece {
-    pub color: PieceColor,
+    pub color: PlayerColor,
     pub kind: PieceKind,
 }
 
 impl Piece {
-    pub fn new(kind: PieceKind, color: PieceColor) -> Self {
+    pub fn new(kind: PieceKind, color: PlayerColor) -> Self {
         Self { kind, color }
     }
 
     #[inline]
-    pub const fn enemy(&self) -> PieceColor {
+    pub const fn enemy(&self) -> PlayerColor {
         match self.color {
-            PieceColor::Red => PieceColor::Blue,
-            PieceColor::Blue => PieceColor::Red,
+            PlayerColor::Red => PlayerColor::Blue,
+            PlayerColor::Blue => PlayerColor::Red,
         }
     }
 }
