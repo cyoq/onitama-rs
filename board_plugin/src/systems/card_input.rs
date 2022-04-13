@@ -1,21 +1,26 @@
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
-use crate::events::{ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent};
+use crate::events::{
+    ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent,
+    ResetSelectedPieceColor,
+};
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
-use crate::resources::selected::SelectedCard;
+use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
 use bevy::prelude::*;
 
 pub fn card_selection_handling(
     board: Res<Board>,
     mut selected_card: ResMut<SelectedCard>,
+    mut selected_piece: ResMut<SelectedPiece>,
     deck: Res<Deck<'static>>,
     windows: Res<Windows>,
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut color_selected_card_ewr: EventWriter<ColorSelectedCardEvent>,
     mut reset_selected_card_color_ewr: EventWriter<ResetSelectedCardColorEvent>,
+    mut reset_selected_piece_color_ewr: EventWriter<ResetSelectedPieceColor>,
 ) {
     let window = windows.get_primary().unwrap();
 
@@ -45,6 +50,13 @@ pub fn card_selection_handling(
                         reset_selected_card_color_ewr
                             .send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
                         selected_card.entity = None;
+
+                        // Reset the selected piece if the card was changed
+                        if selected_piece.entity != None {
+                            reset_selected_piece_color_ewr
+                                .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                            selected_piece.entity = None;
+                        }
                     }
                     // Set a new selected card
                     selected_card.entity = Some(card_board.entity);
@@ -55,8 +67,15 @@ pub fn card_selection_handling(
         }
 
         if !was_card_selected && selected_card.entity != None {
-            reset_selected_card_color_ewr.send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
+            reset_selected_card_color_ewr
+                .send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
             selected_card.entity = None;
+            // Reset the selected piece
+            if selected_piece.entity != None {
+                reset_selected_piece_color_ewr
+                    .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                selected_piece.entity = None;
+            }
         }
         log::info!("Selected card entity: {:?}", selected_card.entity);
     }

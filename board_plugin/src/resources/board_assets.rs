@@ -42,6 +42,8 @@ pub struct BoardAssets {
     ///
     pub selected_card_material: SpriteMaterial,
     ///
+    pub selected_piece_material: SpriteMaterial,
+    ///
     pub guide_text_size: f32,
     ///
     pub font: Handle<Font>,

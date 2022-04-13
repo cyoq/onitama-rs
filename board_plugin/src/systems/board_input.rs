@@ -2,11 +2,12 @@ use std::time::Duration;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
-use crate::components::pieces::Piece;
+use crate::components::pieces::{Piece, PieceColor, PieceKind};
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPiece, NoCardSelectedEvent,
-    PieceSelectEvent,
+    ChangeGuideTextEvent, ColorSelectedPiece, NoCardSelectedEvent, PieceSelectEvent,
+    ResetSelectedPieceColor,
 };
+use crate::resources::board_assets::BoardAssets;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use crate::Board;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
@@ -47,16 +48,17 @@ pub fn input_handling(
 pub fn process_selected_tile(
     mut commands: Commands,
     selected_card: Res<SelectedCard>,
-    // mut selected_piece: ResMut<SelectedPiece>,
-    pieces_q: Query<(Entity, &Children), With<Piece>>,
-    mut sprites: Query<&mut Sprite>,
-    coordinates: Query<&Coordinates>,
-    mut color_selected_piece: EventWriter<ColorSelectedPiece>,
+    mut selected_piece: ResMut<SelectedPiece>,
+    // pieces_q: Query<(Entity, &Children), With<Piece>>,
+    pieces_q: Query<(Entity, &Coordinates), With<Piece>>,
+    mut color_selected_piece_ewr: EventWriter<ColorSelectedPiece>,
+    mut reset_sselected_piece_color_ewr: EventWriter<ResetSelectedPieceColor>,
     mut tile_trigger_event_rdr: EventReader<PieceSelectEvent>,
     mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
     mut no_card_selected_ewr: EventWriter<NoCardSelectedEvent>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
+        // if no cards selected, do not allow to choose a piece
         if selected_card.entity == None {
             change_guide_text_ewr.send(ChangeGuideTextEvent {
                 text: "Please, select a card first!".to_owned(),
@@ -69,74 +71,83 @@ pub fn process_selected_tile(
             return;
         }
 
-        for (parent, children_component) in pieces_q.iter() {
-            for child_entity in children_component.iter() {
-                if let Ok(coords) = coordinates.get(parent) {
-                    if *coords == event.0 {
-                        log::info!("Coloring piece tile: {:?}", coords);
-                        color_selected_piece.send(ColorSelectedPiece {
-                            entity: *child_entity,
-                            coords: *coords,
-                        });
-                        break;
+        for (parent, coords) in pieces_q.iter() {
+            // check if the event coordinates are equal to the one of the pieces coordinates
+            if event.0 == *coords {
+                if selected_piece.entity != None {
+                    reset_sselected_piece_color_ewr
+                        .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                }
+
+                // Do not rerender the same selected piece
+                if let Some(entity) = selected_piece.entity {
+                    if entity == parent {
+                        return;
                     }
                 }
-                // match (coordinates.get(parent), sprites.get_mut(*child_entity)) {
-                //     (Ok(coords), Ok(mut sprite)) => {
-                //         if *coords == event.0 {
-                //             sprite.color = Color::AZURE;
-                //             selected_piece.entity = Some(parent);
-                //             break;
-                //         }
-                //     }
-                //     _ => log::error!("Error retrieving sprite and coords for the piece: "),
-                // }
+
+                log::info!("Coloring piece tile on coordinates: {:?}", coords);
+
+                color_selected_piece_ewr.send(ColorSelectedPiece(parent));
+
+                selected_piece.entity = Some(parent);
+                break;
             }
         }
     }
 }
 
 pub fn color_selected_piece(
-    pieces_q: Query<(Entity, &Children), With<Piece>>,
+    board_assets: Res<BoardAssets>,
+    pieces_q: Query<&Children, With<Piece>>,
     mut sprites: Query<&mut Sprite>,
-    coordinates: Query<&Coordinates>,
     mut color_selected_piece_rdr: EventReader<ColorSelectedPiece>,
 ) {
     for event in color_selected_piece_rdr.iter() {
-        // if let Ok((parent, children)) = pieces_q.get(event.entity) {
-        //     for child_entity in children.iter() {
-        //         match (coordinates.get(parent), sprites.get_mut(*child_entity)) {
-        //             (Ok(coords), Ok(mut sprite)) => {
-        //                 log::info!("Coords: {:?} event: {:?}", coords, event.coords);
-        //                 if *coords == event.coords {
-        //                     sprite.color = Color::AZURE;
-        //                     break;
-        //                 }
-        //             }
-        //             _ => log::error!("Error while coloring the piece tile: "),
-        //         }
-        //     }
-        // }
-
-        // if let Ok((parent, children)) = pieces_q.get(event.entity) {
-        //     for child_entity in children.iter() {
-        //         match sprites.get_mut(*child_entity) {
-        //             Ok(mut sprite) => {
-        //                 log::info!("Coords: {:?}", event.coords);
-        //                 sprite.color = Color::AZURE;
-        //                 break;
-        //             }
-        //             _ => log::error!("Error while coloring the piece tile: "),
-        //         }
-        //     }
-        // }
-
-        match sprites.get_mut(event.entity) {
-            Ok(mut sprite) => {
-                sprite.color = Color::AZURE;
-                // break;
+        if let Ok(children) = pieces_q.get(event.0) {
+            for child_entity in children.iter() {
+                match sprites.get_mut(*child_entity) {
+                    Ok(mut sprite) => {
+                        sprite.color = board_assets.selected_piece_material.color;
+                        break;
+                    }
+                    e => log::error!("Error while coloring the piece tile: {:?}", e),
+                }
             }
-            Err(e) => log::error!("Error while coloring the piece tile: {:?}", e),
+        }
+    }
+}
+
+pub fn reset_selected_piece_color(
+    board_assets: Res<BoardAssets>,
+    pieces_q: Query<(&Children, &Piece)>,
+    mut sprites: Query<&mut Sprite>,
+    mut reset_selected_piece_color_rdr: EventReader<ResetSelectedPieceColor>,
+) {
+    for event in reset_selected_piece_color_rdr.iter() {
+        if let Ok((children, piece)) = pieces_q.get(event.0) {
+            for child_entity in children.iter() {
+                match sprites.get_mut(*child_entity) {
+                    Ok(mut sprite) => {
+                        sprite.color = match (piece.color, piece.kind) {
+                            (PieceColor::Red, PieceKind::Pawn) => {
+                                board_assets.red_pawn_material.color
+                            }
+                            (PieceColor::Red, PieceKind::King) => {
+                                board_assets.red_king_material.color
+                            }
+                            (PieceColor::Blue, PieceKind::Pawn) => {
+                                board_assets.blue_pawn_material.color
+                            }
+                            (PieceColor::Blue, PieceKind::King) => {
+                                board_assets.blue_king_material.color
+                            }
+                        };
+                        break;
+                    }
+                    Err(e) => log::error!("Error while coloring the piece tile: {:?}", e),
+                }
+            }
         }
     }
 }

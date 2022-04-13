@@ -13,10 +13,7 @@ pub struct PieceSelectEvent(pub Coordinates);
 pub struct ResetSelectedPieceColor(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
-pub struct ColorSelectedPiece {
-    pub entity: Entity,
-    pub coords: Coordinates
-}
+pub struct ColorSelectedPiece(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
 pub struct CardTriggerEvent(pub CardIndex);

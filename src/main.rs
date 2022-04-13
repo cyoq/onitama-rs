@@ -106,6 +106,10 @@ fn setup_board(
             color: Color::rgb_u8(255, 154, 154),
             ..Default::default()
         },
+        selected_piece_material: SpriteMaterial {
+            color: Color::AZURE,
+            ..Default::default()
+        },
         guide_text_size: 80.,
         font: asset_server.load("fonts/pixeled.ttf"),
     });

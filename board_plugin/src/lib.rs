@@ -23,12 +23,12 @@ use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
     ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPiece, NoCardSelectedEvent,
-    PieceSelectEvent, ResetSelectedCardColorEvent,
+    PieceSelectEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColor,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
-use crate::resources::selected::SelectedCard;
+use crate::resources::selected::{SelectedCard, SelectedPiece};
 use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
@@ -185,6 +185,7 @@ impl<T> BoardPlugin<T> {
         });
 
         commands.insert_resource(SelectedCard::default());
+        commands.insert_resource(SelectedPiece::default());
 
         // Spawn a guide text
         commands
@@ -494,7 +495,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("color_selected_tile"),
                 )
                 .with_system(systems::guide_text_change::process_guide_text_change_timer)
-                .with_system(systems::board_input::color_selected_piece), // .with_system(systems::card_input::blink_non_selected_card),
+                .with_system(systems::board_input::color_selected_piece) // .with_system(systems::card_input::blink_non_selected_card),
+                .with_system(systems::board_input::reset_selected_piece_color),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
@@ -502,6 +504,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<ChangeGuideTextEvent>();
         app.add_event::<NoCardSelectedEvent>();
         app.add_event::<ColorSelectedPiece>();
+        app.add_event::<ResetSelectedPieceColor>();
 
         log::info!("Loaded Board Plugin");
 
