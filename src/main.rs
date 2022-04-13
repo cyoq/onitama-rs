@@ -110,6 +110,10 @@ fn setup_board(
             color: Color::AZURE,
             ..Default::default()
         },
+        allowed_move_tile_material: SpriteMaterial {
+            color: Color::CYAN,
+            ..Default::default()
+        },
         guide_text_size: 80.,
         font: asset_server.load("fonts/pixeled.ttf"),
     });

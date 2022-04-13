@@ -1,8 +1,8 @@
 use crate::components::background::Background;
 use crate::components::card_index::CardIndex;
 use crate::events::{
-    ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent,
-    ResetSelectedPieceColor,
+    ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
+    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
@@ -20,7 +20,8 @@ pub fn card_selection_handling(
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut color_selected_card_ewr: EventWriter<ColorSelectedCardEvent>,
     mut reset_selected_card_color_ewr: EventWriter<ResetSelectedCardColorEvent>,
-    mut reset_selected_piece_color_ewr: EventWriter<ResetSelectedPieceColor>,
+    mut reset_selected_piece_color_ewr: EventWriter<ResetSelectedPieceColorEvent>,
+    mut reset_allowed_moves_ewr: EventWriter<ResetAllowedMovesEvent>,
 ) {
     let window = windows.get_primary().unwrap();
 
@@ -54,7 +55,8 @@ pub fn card_selection_handling(
                         // Reset the selected piece if the card was changed
                         if selected_piece.entity != None {
                             reset_selected_piece_color_ewr
-                                .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                                .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
+                            reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                             selected_piece.entity = None;
                         }
                     }
@@ -73,7 +75,8 @@ pub fn card_selection_handling(
             // Reset the selected piece
             if selected_piece.entity != None {
                 reset_selected_piece_color_ewr
-                    .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                    .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
+                reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                 selected_piece.entity = None;
             }
         }

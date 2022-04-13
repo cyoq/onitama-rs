@@ -1,6 +1,10 @@
+use crate::components::card_board::CardBoard;
+use crate::components::coordinates::Coordinates;
 use crate::components::pieces::{Piece, PieceColor::*, PieceKind::*};
 use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
+
+use super::card::Card;
 
 const BOARD_SIZE: usize = 5;
 
@@ -78,6 +82,18 @@ impl TileMap {
             buffer = format!("{}|\n", buffer);
         }
         format!("{}{}", buffer, line)
+    }
+
+    pub fn generate_allowed_moves(
+        &self,
+        coordinates: &Coordinates,
+        card: &Card,
+    ) -> Vec<Coordinates> {
+        card.directions
+            .iter()
+            .map(|tuple| *coordinates + *tuple)
+            .filter(|coords| coords.x < 5 && coords.y < 5)
+            .collect::<Vec<_>>()
     }
 
     #[inline]

@@ -10,6 +10,7 @@ use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy::utils::{AHashExt, HashMap};
 use components::background::Background;
+use components::board_tile::BoardTile;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceColor, PieceKind};
 use resources::board::Board;
@@ -23,8 +24,9 @@ use crate::components::card_board::CardBoard;
 use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPiece, NoCardSelectedEvent,
-    PieceSelectEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColor,
+    ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
+    GenerateAllowedMovesEvent, NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent,
+    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -281,7 +283,8 @@ impl<T> BoardPlugin<T> {
                 })
                 .insert(Name::new(format!("Tile ({}, {})", x, y)))
                 // We add the `Coordinates` component to our tile entity
-                .insert(coordinates);
+                .insert(coordinates)
+                .insert(BoardTile);
 
                 // Creating a pawn or a king square
                 if let Some(piece) = tile.piece {
@@ -499,15 +502,19 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 )
                 .with_system(systems::guide_text_change::process_guide_text_change_timer)
                 .with_system(systems::board_input::color_selected_piece) // .with_system(systems::card_input::blink_non_selected_card),
-                .with_system(systems::board_input::reset_selected_piece_color),
+                .with_system(systems::board_input::reset_selected_piece_color)
+                .with_system(systems::board_input::generate_allowed_moves)
+                .with_system(systems::board_input::reset_allowed_moves),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
         app.add_event::<ResetSelectedCardColorEvent>();
         app.add_event::<ChangeGuideTextEvent>();
         app.add_event::<NoCardSelectedEvent>();
-        app.add_event::<ColorSelectedPiece>();
-        app.add_event::<ResetSelectedPieceColor>();
+        app.add_event::<ColorSelectedPieceEvent>();
+        app.add_event::<ResetSelectedPieceColorEvent>();
+        app.add_event::<GenerateAllowedMovesEvent>();
+        app.add_event::<ResetAllowedMovesEvent>();
 
         log::info!("Loaded Board Plugin");
 

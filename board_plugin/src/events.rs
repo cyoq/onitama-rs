@@ -10,10 +10,10 @@ pub struct ChangeGuideTextEvent {
 pub struct PieceSelectEvent(pub Coordinates);
 
 #[derive(Debug, Clone, Copy)]
-pub struct ResetSelectedPieceColor(pub Entity);
+pub struct ResetSelectedPieceColorEvent(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
-pub struct ColorSelectedPiece(pub Entity);
+pub struct ColorSelectedPieceEvent(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
 pub struct CardTriggerEvent(pub CardIndex);
@@ -26,3 +26,9 @@ pub struct ColorSelectedCardEvent(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
 pub struct NoCardSelectedEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct GenerateAllowedMovesEvent(pub Coordinates);
+
+#[derive(Debug, Clone, Copy)]
+pub struct ResetAllowedMovesEvent;

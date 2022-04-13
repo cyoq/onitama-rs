@@ -5,3 +5,5 @@ pub mod card_index;
 pub mod card_board;
 pub mod background;
 pub mod guide_text_timer;
+pub mod board_tile;
+pub mod allowed_move;

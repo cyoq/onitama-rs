@@ -1,13 +1,17 @@
 use std::time::Duration;
 
+use crate::components::allowed_move::AllowedMove;
+use crate::components::background::Background;
+use crate::components::board_tile::BoardTile;
 use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
 use crate::components::pieces::{Piece, PieceColor, PieceKind};
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedPiece, NoCardSelectedEvent, PieceSelectEvent,
-    ResetSelectedPieceColor,
+    ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent, NoCardSelectedEvent,
+    PieceSelectEvent, ResetAllowedMovesEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_assets::BoardAssets;
+use crate::resources::deck::Deck;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use crate::Board;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
@@ -49,13 +53,14 @@ pub fn process_selected_tile(
     mut commands: Commands,
     selected_card: Res<SelectedCard>,
     mut selected_piece: ResMut<SelectedPiece>,
-    // pieces_q: Query<(Entity, &Children), With<Piece>>,
     pieces_q: Query<(Entity, &Coordinates), With<Piece>>,
-    mut color_selected_piece_ewr: EventWriter<ColorSelectedPiece>,
-    mut reset_sselected_piece_color_ewr: EventWriter<ResetSelectedPieceColor>,
+    mut color_selected_piece_ewr: EventWriter<ColorSelectedPieceEvent>,
+    mut reset_sselected_piece_color_ewr: EventWriter<ResetSelectedPieceColorEvent>,
     mut tile_trigger_event_rdr: EventReader<PieceSelectEvent>,
     mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
     mut no_card_selected_ewr: EventWriter<NoCardSelectedEvent>,
+    mut generate_allowed_moves_ewr: EventWriter<GenerateAllowedMovesEvent>,
+    mut reset_allowed_moves_ewr: EventWriter<ResetAllowedMovesEvent>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
         // if no cards selected, do not allow to choose a piece
@@ -74,9 +79,11 @@ pub fn process_selected_tile(
         for (parent, coords) in pieces_q.iter() {
             // check if the event coordinates are equal to the one of the pieces coordinates
             if event.0 == *coords {
+                // changing the piece we should reset the old one
                 if selected_piece.entity != None {
                     reset_sselected_piece_color_ewr
-                        .send(ResetSelectedPieceColor(selected_piece.entity.unwrap()));
+                        .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
+                    reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                 }
 
                 // Do not rerender the same selected piece
@@ -88,7 +95,8 @@ pub fn process_selected_tile(
 
                 log::info!("Coloring piece tile on coordinates: {:?}", coords);
 
-                color_selected_piece_ewr.send(ColorSelectedPiece(parent));
+                color_selected_piece_ewr.send(ColorSelectedPieceEvent(parent));
+                generate_allowed_moves_ewr.send(GenerateAllowedMovesEvent(*coords));
 
                 selected_piece.entity = Some(parent);
                 break;
@@ -101,7 +109,7 @@ pub fn color_selected_piece(
     board_assets: Res<BoardAssets>,
     pieces_q: Query<&Children, With<Piece>>,
     mut sprites: Query<&mut Sprite>,
-    mut color_selected_piece_rdr: EventReader<ColorSelectedPiece>,
+    mut color_selected_piece_rdr: EventReader<ColorSelectedPieceEvent>,
 ) {
     for event in color_selected_piece_rdr.iter() {
         if let Ok(children) = pieces_q.get(event.0) {
@@ -122,7 +130,7 @@ pub fn reset_selected_piece_color(
     board_assets: Res<BoardAssets>,
     pieces_q: Query<(&Children, &Piece)>,
     mut sprites: Query<&mut Sprite>,
-    mut reset_selected_piece_color_rdr: EventReader<ResetSelectedPieceColor>,
+    mut reset_selected_piece_color_rdr: EventReader<ResetSelectedPieceColorEvent>,
 ) {
     for event in reset_selected_piece_color_rdr.iter() {
         if let Ok((children, piece)) = pieces_q.get(event.0) {
@@ -148,6 +156,53 @@ pub fn reset_selected_piece_color(
                     Err(e) => log::error!("Error while coloring the piece tile: {:?}", e),
                 }
             }
+        }
+    }
+}
+
+pub fn generate_allowed_moves(
+    mut commands: Commands,
+    board: Res<Board>,
+    deck: Res<Deck<'static>>,
+    selected_card: Res<SelectedCard>,
+    mut tiles_q: Query<(Entity, &Coordinates, &mut Sprite), With<BoardTile>>,
+    mut generate_allowed_moves_rdr: EventReader<GenerateAllowedMovesEvent>,
+) {
+    for event in generate_allowed_moves_rdr.iter() {
+        let card_entity = match selected_card.entity {
+            Some(card) => card,
+            None => {
+                log::warn!("Selected card entity was empty when generating allowed moves");
+                return;
+            }
+        };
+
+        let card_board = deck.cardboards.get(&card_entity).unwrap();
+        let allowed_moves = board
+            .tile_map
+            .generate_allowed_moves(&event.0, &card_board.card);
+
+        for (entity, coords, mut sprite) in tiles_q.iter_mut() {
+            // TODO: different color for enemy piece
+            // TODO: bug: when the same spot is colored, its color is resetted for the second time
+            if allowed_moves.contains(coords) {
+                sprite.color = Color::TOMATO;
+                commands.entity(entity).insert(AllowedMove);
+            }
+        }
+    }
+}
+
+pub fn reset_allowed_moves(
+    mut commands: Commands,
+    board_assets: Res<BoardAssets>,
+    mut tiles_q: Query<(Entity, &mut Sprite), With<AllowedMove>>,
+    mut reset_allowed_moves_event: EventReader<ResetAllowedMovesEvent>,
+) {
+    for _ in reset_allowed_moves_event.iter() {
+        for (entity, mut sprite) in tiles_q.iter_mut() {
+            sprite.color = board_assets.tile_material.color;
+            commands.entity(entity).remove::<AllowedMove>();
         }
     }
 }

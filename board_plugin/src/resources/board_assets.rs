@@ -44,6 +44,8 @@ pub struct BoardAssets {
     ///
     pub selected_piece_material: SpriteMaterial,
     ///
+    pub allowed_move_tile_material: SpriteMaterial,
+    ///
     pub guide_text_size: f32,
     ///
     pub font: Handle<Font>,
