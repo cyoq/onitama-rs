@@ -25,4 +25,12 @@ impl Piece {
     pub fn new(kind: PieceKind, color: PieceColor) -> Self {
         Self { kind, color }
     }
+
+    #[inline]
+    pub const fn enemy(&self) -> PieceColor {
+        match self.color {
+            PieceColor::Red => PieceColor::Blue,
+            PieceColor::Blue => PieceColor::Red,
+        }
+    }
 }

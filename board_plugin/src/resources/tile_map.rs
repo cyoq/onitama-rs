@@ -1,4 +1,3 @@
-use crate::components::card_board::CardBoard;
 use crate::components::coordinates::Coordinates;
 use crate::components::pieces::{Piece, PieceColor::*, PieceKind::*};
 use crate::resources::tile::Tile;

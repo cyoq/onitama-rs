@@ -231,8 +231,8 @@ impl<T> BoardPlugin<T> {
         padding: f32,
         board_assets: &BoardAssets,
     ) {
-        for (y, line) in board.iter().enumerate() {
-            for (x, tile) in line.iter().enumerate() {
+        for (y, line) in board.iter().rev().enumerate() {
+            for (x, tile) in line.iter().rev().enumerate() {
                 let coordinates = Coordinates {
                     x: x as u8,
                     y: y as u8,

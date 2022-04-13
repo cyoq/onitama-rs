@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use crate::components::allowed_move::AllowedMove;
-use crate::components::background::Background;
 use crate::components::board_tile::BoardTile;
 use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
