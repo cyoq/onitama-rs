@@ -145,13 +145,16 @@ impl<T> BoardPlugin<T> {
             Vec2::new(-deck_pos.x, -deck_pos.y),
         ];
 
-        let cards = [
+        let mut cards = [
             CARDS[0].clone(),
             CARDS[1].clone(),
             CARDS[2].clone(),
             CARDS[3].clone(),
             CARDS[4].clone(),
         ];
+
+        cards[0].is_mirrored = true;
+        cards[1].is_mirrored = true;
 
         let mut deck_container = HashMap::with_capacity(5);
 
@@ -182,7 +185,7 @@ impl<T> BoardPlugin<T> {
             deck_container.insert(
                 card_board_entity,
                 CardBoard {
-                    card: CARDS[i].clone(),
+                    card: cards[i].clone(),
                     bounds: Bounds2 {
                         size: board_size,
                         position: positions[i] + deck_options.position.xy() - board_size / 2.,
@@ -438,7 +441,13 @@ impl<T> BoardPlugin<T> {
         let move_tiles = card
             .directions
             .iter()
-            .map(|tuple| center + *tuple)
+            .map(|tuple| {
+                if card.is_mirrored {
+                    center + (tuple.0, -tuple.1)
+                } else {
+                    center + *tuple
+                }
+            })
             .collect::<Vec<_>>();
 
         // spawn tiles for the card board
