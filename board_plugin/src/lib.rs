@@ -133,14 +133,14 @@ impl<T> BoardPlugin<T> {
         log::info!("one board size from the deck: {}", board_size);
 
         let offset = board_size / 4.;
-        let deck_pos = Vec2::new(board_size.x - offset.x, board_size.y + offset.y);
+        let deck_pos = Vec2::new(-board_size.x / 2. - offset.x, board_size.y + offset.y);
 
         let positions = [
-            Vec2::new(0., 0.),
-            Vec2::new(-deck_pos.x, -deck_pos.y),
-            Vec2::new(-deck_pos.x, deck_pos.y),
             Vec2::new(deck_pos.x, deck_pos.y),
+            Vec2::new(-deck_pos.x, deck_pos.y),
+            Vec2::new(0., 0.),
             Vec2::new(deck_pos.x, -deck_pos.y),
+            Vec2::new(-deck_pos.x, -deck_pos.y),
         ];
 
         let cards = [
@@ -154,17 +154,21 @@ impl<T> BoardPlugin<T> {
         let mut deck_container = HashMap::with_capacity(5);
 
         for i in 0..5 {
+            let position = deck_options.position.xy() + positions[i];
             let card_board_entity = commands
                 .spawn()
                 .insert(Name::new(format!("Card {}", cards[i].name)))
                 .insert(CardIndex(i as u8))
-                .insert(Transform::from_translation(deck_options.position))
+                .insert(Transform::from_translation(Vec3::new(
+                    position.x,
+                    position.y,
+                    deck_options.position.z,
+                )))
                 .insert(GlobalTransform::default())
                 .with_children(|parent| {
                     Self::spawn_deck_card_board(
                         parent,
                         board_size,
-                        positions[i],
                         &cards[i],
                         &board_assets,
                         deck_options.tile_padding,
@@ -231,6 +235,7 @@ impl<T> BoardPlugin<T> {
         padding: f32,
         board_assets: &BoardAssets,
     ) {
+        // reversing here, because bevy starts (0, 0) from the left bottom corner
         for (y, line) in board.iter().rev().enumerate() {
             for (x, tile) in line.iter().rev().enumerate() {
                 let coordinates = Coordinates {
@@ -385,7 +390,6 @@ impl<T> BoardPlugin<T> {
     fn spawn_deck_card_board(
         parent: &mut ChildBuilder,
         board_size: Vec2,
-        position: Vec2,
         card: &Card,
         board_assets: &BoardAssets,
         padding: f32,
@@ -399,7 +403,7 @@ impl<T> BoardPlugin<T> {
                     custom_size: Some(board_size),
                     ..Default::default()
                 },
-                transform: Transform::from_xyz(position.x, position.y, 0.),
+                transform: Transform::from_xyz(0., 0., 0.),
                 ..Default::default()
             })
             .insert(Name::new(format!("Background {}", card.name)))
@@ -422,7 +426,7 @@ impl<T> BoardPlugin<T> {
                         horizontal: HorizontalAlign::Center,
                     },
                 },
-                transform: Transform::from_xyz(position.x, -board_size.y / 1.5 + position.y, 1.),
+                transform: Transform::from_xyz(0.0, -board_size.y / 1.5, 1.),
                 ..Default::default()
             })
             .insert(Name::new(format!("Card title: {}", card.name)));
@@ -461,10 +465,8 @@ impl<T> BoardPlugin<T> {
                         ..Default::default()
                     },
                     transform: Transform::from_xyz(
-                        (x as f32 * tile_size) + (tile_size / 2.)
-                            - (board_size.x / 2. + position.x),
-                        (y as f32 * tile_size) + (tile_size / 2.)
-                            - (board_size.y / 2. + position.y),
+                        (x as f32 * tile_size) + (tile_size / 2.) - (board_size.x / 2.),
+                        (y as f32 * tile_size) + (tile_size / 2.) - (board_size.y / 2.),
                         1.,
                     ),
                     ..Default::default()
