@@ -89,7 +89,6 @@ impl TileMap {
         &self,
         coordinates: &Coordinates,
         card: &Card,
-        curr_color: PlayerColor,
     ) -> Vec<Coordinates> {
         card.directions
             .iter()
@@ -97,8 +96,8 @@ impl TileMap {
             .filter(|coords| {
                 coords.x < 5
                     && coords.y < 5
-                    && if let Some(piece) = self.map[coords.x as usize][coords.y as usize].piece {
-                        piece.color == curr_color
+                    && if let Some(piece) = self.map[coords.y as usize][coords.x as usize].piece {
+                        piece.color == piece.enemy()
                     } else {
                         // no piece - it is good to go
                         true

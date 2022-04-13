@@ -85,18 +85,18 @@ pub fn process_selected_tile(
         for (parent, coords) in pieces_q.iter() {
             // check if the event coordinates are equal to the one of the pieces coordinates
             if event.0 == *coords {
-                // changing the piece we should reset the old one
-                if selected_piece.entity != None {
-                    reset_sselected_piece_color_ewr
-                        .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
-                    reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
-                }
-
                 // Do not rerender the same selected piece
                 if let Some(entity) = selected_piece.entity {
                     if entity == parent {
                         return;
                     }
+                }
+
+                // changing the piece we should reset the old one
+                if selected_piece.entity != None {
+                    reset_sselected_piece_color_ewr
+                        .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
+                    reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                 }
 
                 log::info!("Coloring piece tile on coordinates: {:?}", coords);
@@ -185,11 +185,9 @@ pub fn generate_allowed_moves(
         };
 
         let card_board = deck.cardboards.get(&card_entity).unwrap();
-        let allowed_moves = board.tile_map.generate_allowed_moves(
-            &event.0,
-            &card_board.card,
-            game_state.curr_color,
-        );
+        let allowed_moves = board
+            .tile_map
+            .generate_allowed_moves(&event.0, &card_board.card);
 
         log::info!("Allowed moves: {:?}", allowed_moves);
 
