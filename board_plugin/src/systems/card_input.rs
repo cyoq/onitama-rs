@@ -8,7 +8,7 @@ use crate::events::{
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
-use crate::resources::game::GameState;
+use crate::resources::game_state::GameState;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
 use bevy::prelude::*;

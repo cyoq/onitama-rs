@@ -1,4 +1,4 @@
-use crate::{events::RandomBotMoveEvent, resources::{game::GameState, board::Board}};
+use crate::{events::RandomBotMoveEvent, resources::{game_state::GameState, board::Board}};
 use bevy::prelude::*;
 
 pub fn make_random_bot_move(

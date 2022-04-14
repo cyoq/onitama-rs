@@ -1,6 +1,6 @@
 use bevy::prelude::Component;
 
-use crate::resources::game::PlayerColor;
+use crate::resources::game_state::PlayerColor;
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

@@ -7,7 +7,7 @@ use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
 use board_plugin::BoardPlugin;
-use board_plugin::resources::game::{GameState, Player, PlayerType};
+use board_plugin::resources::game_state::{GameState, Player, PlayerType};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {

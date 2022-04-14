@@ -6,13 +6,14 @@ use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
 use crate::components::pieces::{Piece, PieceKind};
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent, MovePieceEvent,
-    NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent, ResetSelectedPieceColorEvent,
+    CardMoveEvent, ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent,
+    MovePieceEvent, NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent,
+    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
-use crate::resources::game::{GameState, PlayerColor, PlayerType};
+use crate::resources::game_state::{GameState, PlayerColor, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use crate::resources::tile_map::MoveResult;
 use crate::BoardPlugin;
@@ -252,11 +253,14 @@ pub fn move_piece<T>(
     mut board: ResMut<Board>,
     game_state: Res<GameState<'static>>,
     mut selected_piece: ResMut<SelectedPiece>,
+    mut selected_card: ResMut<SelectedCard>,
     board_assets: Res<BoardAssets>,
     tiles_q: Query<(Entity, &Coordinates), With<BoardTile>>,
     children_q: Query<&Children, With<BoardTile>>,
     pieces_q: Query<&Piece>,
     mut move_piece_rdr: EventReader<MovePieceEvent>,
+    mut reset_selected_card_ewr: EventWriter<ResetSelectedCardColorEvent>,
+    mut card_move_ewr: EventWriter<CardMoveEvent>,
 ) {
     // TODO: for a better handling of a piece movement, it could be better to use a bundle
     // with a piece and a sprite
@@ -295,7 +299,6 @@ pub fn move_piece<T>(
                 && *coords == event.0
             {
                 if let Ok(children) = children_q.get(parent) {
-                    log::info!("Children: {:?}", children);
                     for child_entity in children.iter() {
                         commands.entity(*child_entity).despawn_recursive();
                         commands.entity(parent).remove::<Piece>();
@@ -317,5 +320,8 @@ pub fn move_piece<T>(
         }
 
         selected_piece.clear();
+        card_move_ewr.send(CardMoveEvent(selected_card.entity.unwrap()));
+        reset_selected_card_ewr.send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
+        selected_card.entity = None;
     }
 }

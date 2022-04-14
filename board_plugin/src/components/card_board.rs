@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     bounds::Bounds2,
-    resources::{card::Card, game::PlayerColor},
+    resources::{card::Card, game_state::PlayerColor},
 };
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]

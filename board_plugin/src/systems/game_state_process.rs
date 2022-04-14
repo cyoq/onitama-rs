@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{events::{TurnProcessEvent, RandomBotMoveEvent}, resources::game::{GameState, PlayerType}};
+use crate::{events::{TurnProcessEvent, RandomBotMoveEvent}, resources::game_state::{GameState, PlayerType}};
 
 pub fn turn_process(
     game_state: Res<GameState<'static>>,

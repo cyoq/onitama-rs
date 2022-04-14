@@ -4,7 +4,7 @@ use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
-use super::game::{GameState, PlayerColor::*};
+use super::game_state::{GameState, PlayerColor::*};
 
 const BOARD_SIZE: usize = 5;
 

@@ -21,7 +21,7 @@ use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::card::Card;
 use resources::deck_options::DeckOptions;
-use resources::game::PlayerColor;
+use resources::game_state::PlayerColor;
 
 use crate::bounds::Bounds2;
 use crate::components::card_board::{CardBoard, CardOwner};
@@ -31,7 +31,7 @@ use crate::events::{
     ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
     GenerateAllowedMovesEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
     PieceSelectEvent, RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
-    ResetSelectedPieceColorEvent,
+    ResetSelectedPieceColorEvent, CardMoveEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -565,6 +565,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<NextTurnEvent>();
         app.add_event::<RandomBotMoveEvent>();
         app.add_event::<MovePieceEvent>();
+        app.add_event::<CardMoveEvent>();
 
         log::info!("Loaded Board Plugin");
 
