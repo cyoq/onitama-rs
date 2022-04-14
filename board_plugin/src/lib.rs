@@ -559,9 +559,14 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         );
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
-                .with_system(systems::game_state_process::turn_process)
-                .with_system(systems::ai_input::make_random_bot_move)
-                .with_system(systems::board_input::input_handling.label("input_handling"))
+                .with_system(systems::game_state_process::next_turn_event.label("next_turn_event"))
+                .with_system(systems::game_state_process::turn_process.after("next_turn_event"))
+                .with_system(systems::ai_input::make_random_bot_move.after("next_turn_event"))
+                .with_system(
+                    systems::board_input::input_handling
+                        .label("input_handling")
+                        .after("next_turn_event"),
+                )
                 .with_system(systems::card_input::card_selection_handling.after("input_handling"))
                 .with_system(
                     systems::board_input::process_selected_tile.label("color_selected_tile"),
