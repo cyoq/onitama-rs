@@ -1,23 +1,27 @@
 use crate::components::background::Background;
+use crate::components::card_board::CardOwner;
 use crate::components::card_index::CardIndex;
 use crate::events::{
-    ColorSelectedCardEvent, NoCardSelectedEvent, ResetSelectedCardColorEvent,
-    ResetSelectedPieceColorEvent, ResetAllowedMovesEvent,
+    ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
+    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
+use crate::resources::game::{GameState};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
 use bevy::prelude::*;
 
 pub fn card_selection_handling(
     board: Res<Board>,
+    game_state: Res<GameState<'static>>,
     mut selected_card: ResMut<SelectedCard>,
     mut selected_piece: ResMut<SelectedPiece>,
     deck: Res<Deck<'static>>,
     windows: Res<Windows>,
     mouse_button_inputs: Res<Input<MouseButton>>,
+    colors_q: Query<&CardOwner>,
     mut color_selected_card_ewr: EventWriter<ColorSelectedCardEvent>,
     mut reset_selected_card_color_ewr: EventWriter<ResetSelectedCardColorEvent>,
     mut reset_selected_piece_color_ewr: EventWriter<ResetSelectedPieceColorEvent>,
@@ -37,9 +41,19 @@ pub fn card_selection_handling(
             }
         }
 
+        let curr_color = game_state.curr_color;
+
         for (card_board_entity, card_board) in deck.cardboards.iter() {
             if let Some(pos) = position {
                 if card_board.in_bounds(&window, pos) {
+
+                    if let Ok(card_owner) = colors_q.get(*card_board_entity) {
+                        if !card_owner.does_belong_to_player(&curr_color) {
+                            log::info!("Cannot select a card with a different color!");
+                            return;
+                        }
+                    }
+
                     // Check if there is an already selected card. Clear its color
                     if let Some(entity) = selected_card.entity {
                         // skip rerendering the same selected card
@@ -76,7 +90,7 @@ pub fn card_selection_handling(
             if selected_piece.entity != None {
                 reset_selected_piece_color_ewr
                     .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
-                            reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
+                reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
                 selected_piece.entity = None;
             }
         }

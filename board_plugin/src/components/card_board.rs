@@ -1,6 +1,24 @@
 use bevy::prelude::*;
 
-use crate::{bounds::Bounds2, resources::card::Card};
+use crate::{bounds::Bounds2, resources::{card::Card, game::PlayerColor}};
+
+#[derive(Debug, Clone, Copy, Component)]
+pub enum CardOwner {
+    Blue,
+    Red,
+    Neutral
+}
+
+impl CardOwner {
+    #[inline]
+    pub fn does_belong_to_player(&self, player_color: &PlayerColor) -> bool {
+        match (self, player_color) {
+            (CardOwner::Blue, PlayerColor::Blue) => true,
+            (CardOwner::Red, PlayerColor::Red) => true,
+            _ => false
+        }
+    }
+}
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Clone, Component)]

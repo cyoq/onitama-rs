@@ -1,5 +1,5 @@
 use crate::components::{card_index::CardIndex, coordinates::Coordinates};
-use bevy::prelude::*;
+use bevy::{prelude::*, ecs::system::Resource};
 
 #[derive(Debug, Clone)]
 pub struct ChangeGuideTextEvent {
@@ -32,3 +32,12 @@ pub struct GenerateAllowedMovesEvent(pub Coordinates);
 
 #[derive(Debug, Clone, Copy)]
 pub struct ResetAllowedMovesEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct RandomBotMoveEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct NextTurnEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct TurnProcessEvent;

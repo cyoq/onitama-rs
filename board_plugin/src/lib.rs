@@ -14,6 +14,7 @@ use components::background::Background;
 use components::board_tile::BoardTile;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceKind};
+use events::TurnProcessEvent;
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
@@ -22,13 +23,13 @@ use resources::deck_options::DeckOptions;
 use resources::game::PlayerColor;
 
 use crate::bounds::Bounds2;
-use crate::components::card_board::CardBoard;
+use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
     ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
-    GenerateAllowedMovesEvent, NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent,
-    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    GenerateAllowedMovesEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent,
+    ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -181,6 +182,16 @@ impl<T> BoardPlugin<T> {
                     );
                 })
                 .id();
+
+            if i == 0 || i == 1 {
+                commands.entity(card_board_entity).insert(CardOwner::Blue);
+            } else if i == 3 || i == 4 {
+                commands.entity(card_board_entity).insert(CardOwner::Red);
+            } else {
+                commands
+                    .entity(card_board_entity)
+                    .insert(CardOwner::Neutral);
+            }
 
             deck_container.insert(
                 card_board_entity,
@@ -491,12 +502,18 @@ impl<T> BoardPlugin<T> {
             }
         } // end of for loop
     }
+
+    pub fn start_game(mut turn_process_ewr: EventWriter<TurnProcessEvent>) {
+        turn_process_ewr.send(TurnProcessEvent);
+    }
 }
 
 impl<T: StateData> Plugin for BoardPlugin<T> {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(self.running_state.clone()).with_system(Self::create_board),
+            SystemSet::on_enter(self.running_state.clone())
+                .with_system(Self::create_board)
+                .with_system(Self::start_game),
         );
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
@@ -528,6 +545,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<ResetSelectedPieceColorEvent>();
         app.add_event::<GenerateAllowedMovesEvent>();
         app.add_event::<ResetAllowedMovesEvent>();
+        app.add_event::<TurnProcessEvent>();
+        app.add_event::<NextTurnEvent>();
 
         log::info!("Loaded Board Plugin");
 
