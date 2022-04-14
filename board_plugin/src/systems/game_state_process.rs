@@ -2,7 +2,7 @@ use bevy::{log, prelude::*};
 
 use crate::{
     events::{
-        ChangeGuideTextEvent, NextTurnEvent, ProcessWinConditionEvent, RandomBotMoveEvent,
+        ChangeGuideTextEvent, NextTurnEvent, ProcessWinConditionEvent, GenerateBotMoveEvent,
         TurnProcessEvent,
     },
     resources::{
@@ -15,14 +15,14 @@ use crate::{
 pub fn turn_process(
     game_state: Res<GameState<'static>>,
     mut turn_process_rdr: EventReader<TurnProcessEvent>,
-    mut random_bot_move_ewr: EventWriter<RandomBotMoveEvent>,
+    mut random_bot_move_ewr: EventWriter<GenerateBotMoveEvent>,
 ) {
     for _ in turn_process_rdr.iter() {
         let curr_player = game_state.get_current_player();
 
         match curr_player.player_type {
             PlayerType::Human => break,
-            PlayerType::Random => random_bot_move_ewr.send(RandomBotMoveEvent),
+            PlayerType::Random => random_bot_move_ewr.send(GenerateBotMoveEvent),
             PlayerType::AlphaBeta => (),
         }
     }

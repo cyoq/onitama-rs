@@ -31,7 +31,7 @@ use crate::events::{
     BotMakeMoveEvent, CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent,
     ColorSelectedPieceEvent, GenerateAllowedMovesEvent, MirrorCardEvent, MovePieceEvent,
     NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
-    RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
+    GenerateBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
     ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
@@ -573,7 +573,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 )
                 .with_system(systems::game_state_process::turn_process.after("next_turn_event"))
                 .with_system(
-                    systems::ai_input::generate_random_bot_move
+                    systems::ai_input::generate_bot_move
                         .label("bot_generate_move")
                         .after("next_turn_event"),
                 )
@@ -624,7 +624,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<ResetAllowedMovesEvent>();
         app.add_event::<TurnProcessEvent>();
         app.add_event::<NextTurnEvent>();
-        app.add_event::<RandomBotMoveEvent>();
+        app.add_event::<GenerateBotMoveEvent>();
         app.add_event::<MovePieceEvent>();
         app.add_event::<CardSwapEvent>();
         app.add_event::<MirrorCardEvent>();

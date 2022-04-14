@@ -1,8 +1,8 @@
 use crate::{
     components::{board_tile::BoardTile, coordinates::Coordinates, pieces::Piece},
     events::{
-        BotMakeMoveEvent, CardSwapEvent, NextTurnEvent, ProcessWinConditionEvent,
-        RandomBotMoveEvent,
+        BotMakeMoveEvent, CardSwapEvent, GenerateBotMoveEvent, NextTurnEvent,
+        ProcessWinConditionEvent,
     },
     resources::{
         board::Board, board_assets::BoardAssets, deck::Deck, game_state::GameState,
@@ -11,42 +11,23 @@ use crate::{
     BoardPlugin,
 };
 use bevy::{log, prelude::*};
-use rand::Rng;
 
-pub fn generate_random_bot_move(
+pub fn generate_bot_move(
     board: Res<Board>,
     game_state: Res<GameState<'static>>,
     deck: Res<Deck<'static>>,
-    mut random_bot_move_rdr: EventReader<RandomBotMoveEvent>,
+    mut random_bot_move_rdr: EventReader<GenerateBotMoveEvent>,
     mut bot_make_move_ewr: EventWriter<BotMakeMoveEvent>,
 ) {
     for _ in random_bot_move_rdr.iter() {
-        let all_moves = board
-            .tile_map
-            .generate_all_possible_moves(&game_state, &deck);
-        let card_idx: usize = rand::thread_rng().gen_range(0..2);
-
-        log::info!("All possible moves: ");
-        for pmov in all_moves.iter() {
-            println!(
-                "card: {:?}",
-                deck.cardboards.get(&pmov.card).unwrap().card.name,
-            );
-            for mov in pmov.moves.iter() {
-                println!("Move: {:?}", mov);
-            }
-        }
-
-        let moves = &all_moves[card_idx];
-        let size = moves.moves.len();
-        let mov_idx: usize = rand::thread_rng().gen_range(0..size);
-
-        let mov = &moves.moves[mov_idx];
-        log::info!("Random bot chose a move {:?}", mov);
+        let current_player = game_state.get_current_player();
+        let (card, mov) = current_player
+            .agent
+            .generate_move(&board, &game_state, &deck);
 
         bot_make_move_ewr.send(BotMakeMoveEvent {
-            mov: *mov,
-            card_used: moves.card,
+            mov: mov,
+            card_used: card,
         });
     }
 }

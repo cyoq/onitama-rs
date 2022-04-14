@@ -36,7 +36,7 @@ pub struct GenerateAllowedMovesEvent(pub Coordinates);
 pub struct ResetAllowedMovesEvent;
 
 #[derive(Debug, Clone, Copy)]
-pub struct RandomBotMoveEvent;
+pub struct GenerateBotMoveEvent;
 
 #[derive(Debug, Clone, Copy)]
 pub struct NextTurnEvent;
