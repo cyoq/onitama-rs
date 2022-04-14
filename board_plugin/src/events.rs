@@ -41,3 +41,6 @@ pub struct NextTurnEvent;
 
 #[derive(Debug, Clone, Copy)]
 pub struct TurnProcessEvent;
+
+#[derive(Debug, Clone, Copy)]
+pub struct MovePieceEvent(pub Coordinates);

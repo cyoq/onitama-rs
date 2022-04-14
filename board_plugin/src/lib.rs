@@ -6,6 +6,7 @@ pub mod resources;
 pub mod systems;
 
 use bevy::ecs::schedule::StateData;
+use bevy::ecs::system::EntityCommands;
 use bevy::log;
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
@@ -28,8 +29,8 @@ use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
     ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
-    GenerateAllowedMovesEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent,
-    RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
+    GenerateAllowedMovesEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
+    PieceSelectEvent, RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
     ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
@@ -116,6 +117,7 @@ impl<T> BoardPlugin<T> {
                 size: board_size,
             },
             tile_size,
+            padding: options.tile_padding,
             tile_map,
         });
 
@@ -309,72 +311,82 @@ impl<T> BoardPlugin<T> {
                 .insert(BoardTile);
 
                 // Creating a pawn or a king square
-                if let Some(piece) = tile.piece {
-                    match (piece.color, piece.kind) {
-                        (Blue, King) => {
-                            cmd.insert(piece);
-                            cmd.with_children(|parent| {
-                                parent.spawn_bundle(SpriteBundle {
-                                    sprite: Sprite {
-                                        color: board_assets.blue_king_material.color.clone(),
-                                        custom_size: Some(Vec2::splat(tile_size - padding)),
-                                        ..Default::default()
-                                    },
-                                    transform: Transform::from_xyz(0., 0., 1.),
-                                    texture: board_assets.blue_king_material.texture.clone(),
-                                    ..Default::default()
-                                });
-                            });
-                        }
-                        (Blue, Pawn) => {
-                            cmd.insert(piece);
-                            cmd.with_children(|parent| {
-                                parent.spawn_bundle(SpriteBundle {
-                                    sprite: Sprite {
-                                        color: board_assets.blue_pawn_material.color.clone(),
-                                        custom_size: Some(Vec2::splat(tile_size - padding)),
-                                        ..Default::default()
-                                    },
-                                    transform: Transform::from_xyz(0., 0., 1.),
-                                    texture: board_assets.blue_pawn_material.texture.clone(),
-                                    ..Default::default()
-                                });
-                            });
-                        }
-                        (Red, King) => {
-                            cmd.insert(piece);
-                            cmd.with_children(|parent| {
-                                parent.spawn_bundle(SpriteBundle {
-                                    sprite: Sprite {
-                                        color: board_assets.red_king_material.color.clone(),
-                                        custom_size: Some(Vec2::splat(tile_size - padding)),
-                                        ..Default::default()
-                                    },
-                                    transform: Transform::from_xyz(0., 0., 1.),
-                                    texture: board_assets.red_king_material.texture.clone(),
-                                    ..Default::default()
-                                });
-                            });
-                        }
-                        (Red, Pawn) => {
-                            cmd.insert(piece);
-                            cmd.with_children(|parent| {
-                                parent.spawn_bundle(SpriteBundle {
-                                    sprite: Sprite {
-                                        color: board_assets.red_pawn_material.color.clone(),
-                                        custom_size: Some(Vec2::splat(tile_size - padding)),
-                                        ..Default::default()
-                                    },
-                                    transform: Transform::from_xyz(0., 0., 1.),
-                                    texture: board_assets.red_pawn_material.texture.clone(),
-                                    ..Default::default()
-                                });
-                            });
-                        }
-                    };
-                }; // if let ends
+                Self::spawn_a_piece(tile.piece, &mut cmd, board_assets, tile_size, padding);
             }
         }
+    }
+
+    pub fn spawn_a_piece(
+        piece: Option<Piece>,
+        cmd: &mut EntityCommands,
+        board_assets: &BoardAssets,
+        tile_size: f32,
+        padding: f32,
+    ) {
+        if let Some(piece) = piece {
+            match (piece.color, piece.kind) {
+                (Blue, King) => {
+                    cmd.insert(piece);
+                    cmd.with_children(|parent| {
+                        parent.spawn_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: board_assets.blue_king_material.color.clone(),
+                                custom_size: Some(Vec2::splat(tile_size - padding)),
+                                ..Default::default()
+                            },
+                            transform: Transform::from_xyz(0., 0., 1.),
+                            texture: board_assets.blue_king_material.texture.clone(),
+                            ..Default::default()
+                        });
+                    });
+                }
+                (Blue, Pawn) => {
+                    cmd.insert(piece);
+                    cmd.with_children(|parent| {
+                        parent.spawn_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: board_assets.blue_pawn_material.color.clone(),
+                                custom_size: Some(Vec2::splat(tile_size - padding)),
+                                ..Default::default()
+                            },
+                            transform: Transform::from_xyz(0., 0., 1.),
+                            texture: board_assets.blue_pawn_material.texture.clone(),
+                            ..Default::default()
+                        });
+                    });
+                }
+                (Red, King) => {
+                    cmd.insert(piece);
+                    cmd.with_children(|parent| {
+                        parent.spawn_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: board_assets.red_king_material.color.clone(),
+                                custom_size: Some(Vec2::splat(tile_size - padding)),
+                                ..Default::default()
+                            },
+                            transform: Transform::from_xyz(0., 0., 1.),
+                            texture: board_assets.red_king_material.texture.clone(),
+                            ..Default::default()
+                        });
+                    });
+                }
+                (Red, Pawn) => {
+                    cmd.insert(piece);
+                    cmd.with_children(|parent| {
+                        parent.spawn_bundle(SpriteBundle {
+                            sprite: Sprite {
+                                color: board_assets.red_pawn_material.color.clone(),
+                                custom_size: Some(Vec2::splat(tile_size - padding)),
+                                ..Default::default()
+                            },
+                            transform: Transform::from_xyz(0., 0., 1.),
+                            texture: board_assets.red_pawn_material.texture.clone(),
+                            ..Default::default()
+                        });
+                    });
+                }
+            };
+        }; // if let ends
     }
 
     fn spawn_text(
@@ -537,7 +549,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::board_input::color_selected_piece) // .with_system(systems::card_input::blink_non_selected_card),
                 .with_system(systems::board_input::reset_selected_piece_color)
                 .with_system(systems::board_input::generate_allowed_moves)
-                .with_system(systems::board_input::reset_allowed_moves),
+                .with_system(systems::board_input::reset_allowed_moves)
+                .with_system(systems::board_input::move_piece::<T>),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
@@ -551,6 +564,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<TurnProcessEvent>();
         app.add_event::<NextTurnEvent>();
         app.add_event::<RandomBotMoveEvent>();
+        app.add_event::<MovePieceEvent>();
 
         log::info!("Loaded Board Plugin");
 
@@ -566,6 +580,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             registry.register::<PieceKind>();
             registry.register::<CardIndex>();
             registry.register::<CardBoard>();
+            registry.register::<CardOwner>();
             registry.register::<Entity>();
         }
     }

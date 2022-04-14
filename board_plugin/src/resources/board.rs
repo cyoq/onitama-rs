@@ -10,6 +10,7 @@ use super::tile_map::TileMap;
 pub struct Board {
     pub bounds: Bounds2,
     pub tile_size: f32,
+    pub padding: f32,
     pub tile_map: TileMap,
 }
 

@@ -6,14 +6,15 @@ use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
 use crate::components::pieces::{Piece, PieceKind};
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent, NoCardSelectedEvent,
-    PieceSelectEvent, ResetAllowedMovesEvent, ResetSelectedPieceColorEvent,
+    ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent, MovePieceEvent,
+    NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
 use crate::resources::game::{GameState, PlayerColor, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
+use crate::BoardPlugin;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
 use bevy::log;
 use bevy::prelude::*;
@@ -57,9 +58,12 @@ pub fn input_handling(
 
 pub fn process_selected_tile(
     mut commands: Commands,
+    game_state: Res<GameState<'static>>,
     selected_card: Res<SelectedCard>,
     mut selected_piece: ResMut<SelectedPiece>,
-    pieces_q: Query<(Entity, &Coordinates), With<Piece>>,
+    pieces_parents_q: Query<(Entity, &Coordinates), With<Piece>>,
+    pieces_q: Query<&Piece>,
+    allowed_moves_q: Query<&Coordinates, With<AllowedMove>>,
     mut color_selected_piece_ewr: EventWriter<ColorSelectedPieceEvent>,
     mut reset_sselected_piece_color_ewr: EventWriter<ResetSelectedPieceColorEvent>,
     mut tile_trigger_event_rdr: EventReader<PieceSelectEvent>,
@@ -67,6 +71,7 @@ pub fn process_selected_tile(
     mut no_card_selected_ewr: EventWriter<NoCardSelectedEvent>,
     mut generate_allowed_moves_ewr: EventWriter<GenerateAllowedMovesEvent>,
     mut reset_allowed_moves_ewr: EventWriter<ResetAllowedMovesEvent>,
+    mut move_piece_ewr: EventWriter<MovePieceEvent>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
         // if no cards selected, do not allow to choose a piece
@@ -82,12 +87,35 @@ pub fn process_selected_tile(
             return;
         }
 
-        for (parent, coords) in pieces_q.iter() {
+        // call a move piece event if the piece is being moved
+        for allowed_move in allowed_moves_q.iter() {
+            if *allowed_move == event.0 {
+                log::info!("Pressed on the allowed move: {:?}", allowed_move);
+                // reset the old selections
+                reset_sselected_piece_color_ewr
+                    .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
+                reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
+
+                // start a move process
+                move_piece_ewr.send(MovePieceEvent(*allowed_move));
+
+                return;
+            }
+        }
+
+        for (parent, coords) in pieces_parents_q.iter() {
             // check if the event coordinates are equal to the one of the pieces coordinates
             if event.0 == *coords {
                 // Do not rerender the same selected piece
                 if let Some(entity) = selected_piece.entity {
                     if entity == parent {
+                        return;
+                    }
+                }
+
+                // Do not highlight opposite color selected
+                if let Ok(piece) = pieces_q.get(parent) {
+                    if piece.color != game_state.curr_color {
                         return;
                     }
                 }
@@ -105,6 +133,7 @@ pub fn process_selected_tile(
                 generate_allowed_moves_ewr.send(GenerateAllowedMovesEvent(*coords));
 
                 selected_piece.entity = Some(parent);
+                selected_piece.coordinates = Some(*coords);
                 break;
             }
         }
@@ -168,7 +197,6 @@ pub fn reset_selected_piece_color(
 
 pub fn generate_allowed_moves(
     mut commands: Commands,
-    game_state: Res<GameState<'static>>,
     board: Res<Board>,
     deck: Res<Deck<'static>>,
     selected_card: Res<SelectedCard>,
@@ -213,5 +241,61 @@ pub fn reset_allowed_moves(
             sprite.color = board_assets.tile_material.color;
             commands.entity(entity).remove::<AllowedMove>();
         }
+    }
+}
+
+pub fn move_piece<T>(
+    mut commands: Commands,
+    mut board: ResMut<Board>,
+    game_state: Res<GameState<'static>>,
+    mut selected_piece: ResMut<SelectedPiece>,
+    board_assets: Res<BoardAssets>,
+    tiles_q: Query<(Entity, &Coordinates), With<BoardTile>>,
+    children_q: Query<&Children, With<BoardTile>>,
+    pieces_q: Query<&Piece>,
+    mut move_piece_rdr: EventReader<MovePieceEvent>,
+) {
+    // TODO: for a better handling of a piece movement, it could be better to use a bundle
+    // with a piece and a sprite
+    for event in move_piece_rdr.iter() {
+        // clear the sprite of old selected piece
+        // we should have a selected piece for sure
+        let mut piece = None;
+        if let Ok((parent, _)) = tiles_q.get(selected_piece.entity.unwrap()) {
+            if let Ok(children) = children_q.get(parent) {
+                for child_entity in children.iter() {
+                    commands.entity(*child_entity).despawn_recursive();
+                    // save a piece type to know what to spawn on a new place
+                    if let Ok(p) = pieces_q.get(parent) {
+                        piece = Some(*p);
+                    }
+                    commands.entity(parent).remove::<Piece>();
+                }
+            }
+        }
+
+        // set a piece on a new location
+        for (parent, coords) in tiles_q.iter() {
+            if *coords == event.0 {
+                let mut cmd = commands.entity(parent);
+                log::info!("the coords: {:?}", coords);
+                BoardPlugin::<T>::spawn_a_piece(
+                    piece,
+                    &mut cmd,
+                    &board_assets,
+                    board.tile_size,
+                    board.padding,
+                );
+            }
+        }
+
+        board
+            .tile_map
+            .make_a_move(selected_piece.coordinates.unwrap(), event.0);
+
+        #[cfg(feature = "debug")]
+        log::info!("{}", board.tile_map.console_output());
+
+        selected_piece.clear();
     }
 }

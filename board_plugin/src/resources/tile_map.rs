@@ -110,6 +110,13 @@ impl TileMap {
             .collect::<Vec<_>>()
     }
 
+    pub fn make_a_move(&mut self, start: Coordinates, end: Coordinates) -> bool {
+        let temp = self.map[start.y as usize][start.x as usize];
+        self.map[start.y as usize][start.x as usize] = self.map[end.y as usize][end.x as usize];
+        self.map[end.y as usize][end.x as usize] = temp;
+        return true;
+    }
+
     #[inline]
     pub fn width(&self) -> u8 {
         self.width

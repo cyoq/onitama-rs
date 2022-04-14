@@ -8,7 +8,7 @@ use crate::events::{
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
-use crate::resources::game::{GameState};
+use crate::resources::game::GameState;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
 use bevy::prelude::*;
@@ -46,7 +46,6 @@ pub fn card_selection_handling(
         for (card_board_entity, card_board) in deck.cardboards.iter() {
             if let Some(pos) = position {
                 if card_board.in_bounds(&window, pos) {
-
                     if let Ok(card_owner) = colors_q.get(*card_board_entity) {
                         if !card_owner.does_belong_to_player(&curr_color) {
                             log::info!("Cannot select a card with a different color!");
@@ -71,7 +70,7 @@ pub fn card_selection_handling(
                             reset_selected_piece_color_ewr
                                 .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
                             reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
-                            selected_piece.entity = None;
+                            selected_piece.clear();
                         }
                     }
                     // Set a new selected card
@@ -91,7 +90,7 @@ pub fn card_selection_handling(
                 reset_selected_piece_color_ewr
                     .send(ResetSelectedPieceColorEvent(selected_piece.entity.unwrap()));
                 reset_allowed_moves_ewr.send(ResetAllowedMovesEvent);
-                selected_piece.entity = None;
+                selected_piece.clear();
             }
         }
         log::info!("Selected card entity: {:?}", selected_card.entity);

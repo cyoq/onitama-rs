@@ -1,12 +1,16 @@
 use bevy::prelude::*;
 
-use crate::{bounds::Bounds2, resources::{card::Card, game::PlayerColor}};
+use crate::{
+    bounds::Bounds2,
+    resources::{card::Card, game::PlayerColor},
+};
 
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Clone, Copy, Component)]
 pub enum CardOwner {
     Blue,
     Red,
-    Neutral
+    Neutral,
 }
 
 impl CardOwner {
@@ -15,7 +19,7 @@ impl CardOwner {
         match (self, player_color) {
             (CardOwner::Blue, PlayerColor::Blue) => true,
             (CardOwner::Red, PlayerColor::Red) => true,
-            _ => false
+            _ => false,
         }
     }
 }
