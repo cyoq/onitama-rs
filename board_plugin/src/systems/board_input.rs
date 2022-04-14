@@ -20,7 +20,6 @@ use crate::BoardPlugin;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
 use bevy::log;
 use bevy::prelude::*;
-use bevy::utils::tracing::Event;
 
 pub fn input_handling(
     game_state: Res<GameState<'static>>,
@@ -252,7 +251,6 @@ pub fn reset_allowed_moves(
 pub fn move_piece<T>(
     mut commands: Commands,
     mut board: ResMut<Board>,
-    game_state: Res<GameState<'static>>,
     mut selected_piece: ResMut<SelectedPiece>,
     mut selected_card: ResMut<SelectedCard>,
     board_assets: Res<BoardAssets>,

@@ -29,7 +29,7 @@ use crate::components::card_index::CardIndex;
 use crate::components::texts::{GuideText, TurnText};
 use crate::events::{
     CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
-    GenerateAllowedMovesEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
+    GenerateAllowedMovesEvent, MirrorCardEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
     PieceSelectEvent, RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
     ResetSelectedPieceColorEvent,
 };
@@ -586,7 +586,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::board_input::generate_allowed_moves)
                 .with_system(systems::board_input::reset_allowed_moves)
                 .with_system(systems::board_input::move_piece::<T>)
-                .with_system(systems::card_input::card_swap),
+                .with_system(systems::card_input::card_swap)
+                .with_system(systems::card_input::mirror_card),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
@@ -602,6 +603,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<RandomBotMoveEvent>();
         app.add_event::<MovePieceEvent>();
         app.add_event::<CardSwapEvent>();
+        app.add_event::<MirrorCardEvent>();
 
         log::info!("Loaded Board Plugin");
 

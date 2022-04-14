@@ -1,9 +1,11 @@
 use crate::components::background::Background;
-use crate::components::card_board::{CardBoard, CardOwner};
+use crate::components::board_tile::BoardTile;
+use crate::components::card_board::CardOwner;
 use crate::components::card_index::CardIndex;
+use crate::components::coordinates::Coordinates;
 use crate::events::{
-    CardSwapEvent, ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
-    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    CardSwapEvent, ColorSelectedCardEvent, MirrorCardEvent, NoCardSelectedEvent,
+    ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
@@ -159,11 +161,20 @@ pub fn card_swap(
     mut deck: ResMut<Deck<'static>>,
     mut transform_q: Query<(&mut Transform, &mut CardIndex, &mut CardOwner)>,
     mut card_swap_rdr: EventReader<CardSwapEvent>,
+    mut mirror_card_ewr: EventWriter<MirrorCardEvent>,
 ) {
     for event in card_swap_rdr.iter() {
         // saving the entity ids for swapping
         let neutral_entity = deck.cards[NEUTRAL_CARD_IDX];
         let swapping_entity = event.0;
+
+        let is_mirrored = deck
+            .cards
+            .iter()
+            .position(|e| *e == swapping_entity)
+            .unwrap()
+            < 2;
+        log::info!("Is mirrored: {:?}", is_mirrored);
 
         let swapping_cardboard_bounds = deck.cardboards.get(&swapping_entity).unwrap().bounds;
         let neutral_cardboard_bounds = deck.cardboards.get(&neutral_entity).unwrap().bounds;
@@ -172,8 +183,14 @@ pub fn card_swap(
         for (k, v) in deck.cardboards.iter_mut() {
             if *k == neutral_entity {
                 v.bounds = swapping_cardboard_bounds;
+                if is_mirrored {
+                    v.card.is_mirrored = true;
+                }
             } else if *k == swapping_entity {
                 v.bounds = neutral_cardboard_bounds;
+                if is_mirrored {
+                    v.card.is_mirrored = false;
+                }
             }
         }
 
@@ -223,5 +240,66 @@ pub fn card_swap(
         *cen_transform = temp_transform;
         *cen_card_index = temp_card_index;
         *cen_card_owner = temp_cardowner;
+        if is_mirrored {
+            mirror_card_ewr.send(MirrorCardEvent(neutral_entity));
+            mirror_card_ewr.send(MirrorCardEvent(swapping_entity));
+        }
+    }
+}
+
+pub fn mirror_card(
+    deck: Res<Deck<'static>>,
+    board_assets: Res<BoardAssets>,
+    tiles_q: Query<&Children, With<CardIndex>>,
+    mut sprites_tiles_q: Query<
+        (&Coordinates, &mut Sprite),
+        (Without<Background>, Without<BoardTile>),
+    >,
+    mut mirror_card_rdr: EventReader<MirrorCardEvent>,
+) {
+    for event in mirror_card_rdr.iter() {
+        let card = &deck.cardboards.get(&event.0).unwrap().card;
+
+        let center = Coordinates { x: 2, y: 2 };
+        let move_tiles = card
+            .directions
+            .iter()
+            .map(|tuple| {
+                if card.is_mirrored {
+                    center + (tuple.0, -tuple.1)
+                } else {
+                    center + *tuple
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if let Ok(children) = tiles_q.get(event.0) {
+            for child in children.iter() {
+                log::info!("got child: {:?}", child);
+                match sprites_tiles_q.get_mut(*child) {
+                    Ok((coordinates, mut sprite)) => {
+                        let mut tile_color;
+
+                        // highlight the center
+                        if *coordinates == center {
+                            tile_color = board_assets.deck_card_center_material.color;
+                        } else {
+                            tile_color = board_assets.tile_material.color;
+                        }
+
+                        // highlight possible moves
+                        if move_tiles.contains(&coordinates) {
+                            tile_color = board_assets.deck_card_allowed_move_material.color;
+                        }
+
+                        sprite.color = tile_color;
+                    }
+                    Err(e) => {
+                        log::warn!("Incorrect query to the sprite while mirroring: {:?}", e);
+                        continue;
+                    }
+                }
+            }
+        }
     }
 }

@@ -1,5 +1,7 @@
 use crate::components::{card_index::CardIndex, coordinates::Coordinates};
-use bevy::{prelude::*};
+use bevy::prelude::*;
+
+// TODO: describe each event action
 
 #[derive(Debug, Clone)]
 pub struct ChangeGuideTextEvent {
@@ -47,3 +49,6 @@ pub struct MovePieceEvent(pub Coordinates);
 
 #[derive(Debug, Clone, Copy)]
 pub struct CardSwapEvent(pub Entity);
+
+#[derive(Debug, Clone, Copy)]
+pub struct MirrorCardEvent(pub Entity);
