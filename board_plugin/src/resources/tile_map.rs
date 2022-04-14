@@ -4,9 +4,17 @@ use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
-use super::game::PlayerColor::*;
+use super::game::{GameState, PlayerColor::*};
 
 const BOARD_SIZE: usize = 5;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MoveResult {
+    Win,
+    Tie,
+    Capture,
+    Move,
+}
 
 /// Base tile map
 #[derive(Debug, Clone, Copy)]
@@ -88,6 +96,7 @@ impl TileMap {
         &self,
         coordinates: &Coordinates,
         card: &Card,
+        game_state: &GameState<'static>,
     ) -> Vec<Coordinates> {
         card.directions
             .iter()
@@ -102,7 +111,7 @@ impl TileMap {
                 coords.x < 5
                     && coords.y < 5
                     && match self.map[coords.y as usize][coords.x as usize].piece {
-                        Some(piece) => piece.color == piece.enemy(),
+                        Some(piece) => piece.color == game_state.curr_color,
                         // no piece - it is good to go
                         None => true,
                     }
@@ -110,11 +119,30 @@ impl TileMap {
             .collect::<Vec<_>>()
     }
 
-    pub fn make_a_move(&mut self, start: Coordinates, end: Coordinates) -> bool {
-        let temp = self.map[start.y as usize][start.x as usize];
-        self.map[start.y as usize][start.x as usize] = self.map[end.y as usize][end.x as usize];
-        self.map[end.y as usize][end.x as usize] = temp;
-        return true;
+    pub fn make_a_move(&mut self, start: Coordinates, end: Coordinates) -> MoveResult {
+        let start_tile = self.map[start.y as usize][start.x as usize];
+        let end_tile = self.map[end.y as usize][end.x as usize];
+
+        // we can be sure that the start tile must have a piece
+        let start_piece = start_tile.piece.unwrap();
+
+        if let Some(end_piece) = end_tile.piece {
+            let mut result = MoveResult::Move;
+            if start_piece.color != end_piece.color && end_piece.kind == King {
+                result = MoveResult::Win;
+            } else if start_piece.color != end_piece.color {
+                result = MoveResult::Capture;
+            }
+
+            self.map[end.y as usize][end.x as usize] = self.map[start.y as usize][start.x as usize];
+            self.map[start.y as usize][start.x as usize].piece = None;
+            return result;
+        }
+
+        self.map[start.y as usize][start.x as usize].piece = None;
+        self.map[end.y as usize][end.x as usize] = start_tile;
+
+        return MoveResult::Move;
     }
 
     #[inline]

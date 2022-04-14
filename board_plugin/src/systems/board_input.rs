@@ -14,6 +14,7 @@ use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
 use crate::resources::game::{GameState, PlayerColor, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
+use crate::resources::tile_map::MoveResult;
 use crate::BoardPlugin;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
 use bevy::log;
@@ -199,6 +200,7 @@ pub fn generate_allowed_moves(
     mut commands: Commands,
     board: Res<Board>,
     deck: Res<Deck<'static>>,
+    game_state: Res<GameState<'static>>,
     selected_card: Res<SelectedCard>,
     mut tiles_q: Query<(Entity, &Coordinates, &mut Sprite), With<BoardTile>>,
     mut generate_allowed_moves_rdr: EventReader<GenerateAllowedMovesEvent>,
@@ -213,9 +215,10 @@ pub fn generate_allowed_moves(
         };
 
         let card_board = deck.cardboards.get(&card_entity).unwrap();
-        let allowed_moves = board
-            .tile_map
-            .generate_allowed_moves(&event.0, &card_board.card);
+        let allowed_moves =
+            board
+                .tile_map
+                .generate_allowed_moves(&event.0, &card_board.card, &game_state);
 
         log::info!("Allowed moves: {:?}", allowed_moves);
 
@@ -258,6 +261,16 @@ pub fn move_piece<T>(
     // TODO: for a better handling of a piece movement, it could be better to use a bundle
     // with a piece and a sprite
     for event in move_piece_rdr.iter() {
+        let move_result = board
+            .tile_map
+            .make_a_move(selected_piece.coordinates.unwrap(), event.0);
+
+        #[cfg(feature = "debug")]
+        {
+            log::info!("{}", board.tile_map.console_output());
+            log::info!("Move result is: {:?}", move_result);
+        }
+
         // clear the sprite of old selected piece
         // we should have a selected piece for sure
         let mut piece = None;
@@ -270,15 +283,28 @@ pub fn move_piece<T>(
                         piece = Some(*p);
                     }
                     commands.entity(parent).remove::<Piece>();
+                    break;
                 }
             }
         }
 
         // set a piece on a new location
         for (parent, coords) in tiles_q.iter() {
+            // despawn a captured figure
+            if (move_result == MoveResult::Capture || move_result == MoveResult::Win)
+                && *coords == event.0
+            {
+                if let Ok(children) = children_q.get(parent) {
+                    log::info!("Children: {:?}", children);
+                    for child_entity in children.iter() {
+                        commands.entity(*child_entity).despawn_recursive();
+                        commands.entity(parent).remove::<Piece>();
+                    }
+                }
+            }
+
             if *coords == event.0 {
                 let mut cmd = commands.entity(parent);
-                log::info!("the coords: {:?}", coords);
                 BoardPlugin::<T>::spawn_a_piece(
                     piece,
                     &mut cmd,
@@ -286,15 +312,9 @@ pub fn move_piece<T>(
                     board.tile_size,
                     board.padding,
                 );
+                break;
             }
         }
-
-        board
-            .tile_map
-            .make_a_move(selected_piece.coordinates.unwrap(), event.0);
-
-        #[cfg(feature = "debug")]
-        log::info!("{}", board.tile_map.console_output());
 
         selected_piece.clear();
     }
