@@ -1,5 +1,5 @@
 use crate::components::{card_index::CardIndex, coordinates::Coordinates};
-use bevy::{prelude::*, ecs::system::Resource};
+use bevy::{prelude::*};
 
 #[derive(Debug, Clone)]
 pub struct ChangeGuideTextEvent {

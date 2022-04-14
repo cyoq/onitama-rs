@@ -29,7 +29,8 @@ use crate::components::guide::GuideText;
 use crate::events::{
     ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
     GenerateAllowedMovesEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent,
-    ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
+    ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -517,6 +518,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         );
         app.add_system_set(
             SystemSet::on_update(self.running_state.clone())
+                .with_system(systems::game_state_process::turn_process)
+                .with_system(systems::ai_input::make_random_bot_move)
                 .with_system(systems::board_input::input_handling.label("input_handling"))
                 .with_system(systems::card_input::card_selection_handling.after("input_handling"))
                 .with_system(
@@ -547,6 +550,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<ResetAllowedMovesEvent>();
         app.add_event::<TurnProcessEvent>();
         app.add_event::<NextTurnEvent>();
+        app.add_event::<RandomBotMoveEvent>();
 
         log::info!("Loaded Board Plugin");
 
