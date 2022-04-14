@@ -1,3 +1,5 @@
+use bevy::log;
+
 use crate::components::coordinates::Coordinates;
 use crate::components::pieces::{Piece, PieceKind::*};
 use crate::resources::tile::Tile;
@@ -7,6 +9,9 @@ use super::card::Card;
 use super::game_state::{GameState, PlayerColor::*};
 
 const BOARD_SIZE: usize = 5;
+
+const RED_TEMPLE: Coordinates = Coordinates { x: 2, y: 0 };
+const BLUE_TEMPLE: Coordinates = Coordinates { x: 2, y: 4 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MoveResult {
@@ -38,39 +43,39 @@ impl TileMap {
 
         let map = [
             [
-                Tile::new(Some(blue_pawn.clone())),
-                Tile::new(Some(blue_pawn.clone())),
-                Tile::new(Some(blue_king)),
-                Tile::new(Some(blue_pawn.clone())),
-                Tile::new(Some(blue_pawn.clone())),
-            ],
-            [
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-            ],
-            [
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-            ],
-            [
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-                Tile::new(None),
-            ],
-            [
                 Tile::new(Some(red_pawn.clone())),
                 Tile::new(Some(red_pawn.clone())),
                 Tile::new(Some(red_king)),
                 Tile::new(Some(red_pawn.clone())),
                 Tile::new(Some(red_pawn.clone())),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+                Tile::new(None),
+            ],
+            [
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_king)),
+                Tile::new(Some(blue_pawn.clone())),
+                Tile::new(Some(blue_pawn.clone())),
             ],
         ];
 
@@ -111,7 +116,7 @@ impl TileMap {
                 coords.x < 5
                     && coords.y < 5
                     && match self.map[coords.y as usize][coords.x as usize].piece {
-                        Some(piece) => piece.color == game_state.curr_color,
+                        Some(piece) => piece.color != game_state.curr_color,
                         // no piece - it is good to go
                         None => true,
                     }
@@ -141,6 +146,16 @@ impl TileMap {
 
         self.map[start.y as usize][start.x as usize].piece = None;
         self.map[end.y as usize][end.x as usize] = start_tile;
+
+        let end_tile = self.map[end.y as usize][end.x as usize];
+        if let Some(piece) = end_tile.piece {
+            if piece.kind == King && piece.color == Red && end == BLUE_TEMPLE {
+                return MoveResult::Win;
+            }
+            if piece.kind == King && piece.color == Blue && end == RED_TEMPLE {
+                return MoveResult::Win;
+            }
+        }
 
         return MoveResult::Move;
     }

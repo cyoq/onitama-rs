@@ -281,8 +281,8 @@ impl<T> BoardPlugin<T> {
         board_assets: &BoardAssets,
     ) {
         // reversing here, because bevy starts (0, 0) from the left bottom corner
-        for (y, line) in board.iter().rev().enumerate() {
-            for (x, tile) in line.iter().rev().enumerate() {
+        for (y, line) in board.iter().enumerate() {
+            for (x, tile) in line.iter().enumerate() {
                 let coordinates = Coordinates {
                     x: x as u8,
                     y: y as u8,
