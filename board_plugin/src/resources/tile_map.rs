@@ -1,4 +1,4 @@
-use bevy::log;
+use bevy::prelude::Entity;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::pieces::{Piece, PieceKind::*};
@@ -6,6 +6,7 @@ use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
+use super::deck::Deck;
 use super::game_state::{GameState, PlayerColor::*};
 
 const BOARD_SIZE: usize = 5;
@@ -19,6 +20,18 @@ pub enum MoveResult {
     Tie,
     Capture,
     Move,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Move {
+    pub from: Coordinates,
+    pub to: Coordinates,
+}
+
+#[derive(Debug, Clone)]
+pub struct PossibleMoves {
+    pub card: Entity,
+    pub moves: Vec<Move>,
 }
 
 /// Base tile map
@@ -157,7 +170,62 @@ impl TileMap {
             }
         }
 
-        return MoveResult::Move;
+        MoveResult::Move
+    }
+
+    pub fn generate_all_possible_moves(
+        &self,
+        game_state: &GameState,
+        deck: &Deck,
+    ) -> Vec<PossibleMoves> {
+        let cards = deck.get_player_cards(game_state);
+        let mut possible_moves = Vec::with_capacity(2);
+        for (entity, card) in cards {
+            let mut moves = vec![];
+            for (y, line) in self.map.iter().enumerate() {
+                for (x, tile) in line.iter().enumerate() {
+                    if let Some(piece) = tile.piece {
+                        if piece.color != game_state.curr_color {
+                            continue;
+                        }
+
+                        let coordinates = Coordinates {
+                            x: x as u8,
+                            y: y as u8,
+                        };
+                        for dir in card.directions {
+                            let mov = if card.is_mirrored {
+                                Move {
+                                    from: coordinates,
+                                    to: coordinates + (dir.0, -dir.1),
+                                }
+                            } else {
+                                Move {
+                                    from: coordinates,
+                                    to: coordinates + *dir,
+                                }
+                            };
+
+                            if mov.to.x < 5
+                                && mov.to.y < 5
+                                && match self.map[mov.to.y as usize][mov.to.x as usize].piece {
+                                    Some(piece) => piece.color != game_state.curr_color,
+                                    // no piece - it is good to go
+                                    None => true,
+                                }
+                            {
+                                moves.push(mov);
+                            }
+                        }
+                    }
+                }
+            }
+            possible_moves.push(PossibleMoves {
+                card: entity,
+                moves,
+            });
+        }
+        possible_moves
     }
 
     #[inline]

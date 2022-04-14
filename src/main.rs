@@ -3,6 +3,7 @@ use bevy::prelude::*;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::ai::human::Human;
+use board_plugin::ai::random_agent::RandomAgent;
 use board_plugin::resources::app_state::AppState;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
@@ -68,8 +69,8 @@ fn setup_board(
     };
 
     let second_player = Player {
-        agent: &Human,
-        player_type: PlayerType::Human,
+        agent: &RandomAgent,
+        player_type: PlayerType::Random,
     };
 
     commands.insert_resource(GameState::new(first_player, second_player));

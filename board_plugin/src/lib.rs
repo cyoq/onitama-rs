@@ -28,10 +28,11 @@ use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
 use crate::components::texts::{GuideText, TurnText};
 use crate::events::{
-    CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
-    GenerateAllowedMovesEvent, MirrorCardEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
-    PieceSelectEvent, ProcessWinConditionEvent, RandomBotMoveEvent, ResetAllowedMovesEvent,
-    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    BotMakeMoveEvent, CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent,
+    ColorSelectedPieceEvent, GenerateAllowedMovesEvent, MirrorCardEvent, MovePieceEvent,
+    NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
+    RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
+    ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -571,7 +572,16 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("process_win_condition"),
                 )
                 .with_system(systems::game_state_process::turn_process.after("next_turn_event"))
-                .with_system(systems::ai_input::make_random_bot_move.after("next_turn_event"))
+                .with_system(
+                    systems::ai_input::generate_random_bot_move
+                        .label("bot_generate_move")
+                        .after("next_turn_event"),
+                )
+                .with_system(
+                    systems::ai_input::bot_make_move::<T>
+                        .label("bot_make_move")
+                        .after("bot_generate_move"),
+                )
                 .with_system(
                     systems::board_input::input_handling
                         .label("input_handling")
@@ -619,6 +629,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<CardSwapEvent>();
         app.add_event::<MirrorCardEvent>();
         app.add_event::<ProcessWinConditionEvent>();
+        app.add_event::<BotMakeMoveEvent>();
 
         log::info!("Loaded Board Plugin");
 
