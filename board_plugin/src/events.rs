@@ -46,4 +46,4 @@ pub struct TurnProcessEvent;
 pub struct MovePieceEvent(pub Coordinates);
 
 #[derive(Debug, Clone, Copy)]
-pub struct CardMoveEvent(pub Entity);
+pub struct CardSwapEvent(pub Entity);

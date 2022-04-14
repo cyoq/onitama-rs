@@ -1,13 +1,13 @@
 use crate::components::background::Background;
-use crate::components::card_board::CardOwner;
+use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
 use crate::events::{
-    ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
+    CardSwapEvent, ColorSelectedCardEvent, NoCardSelectedEvent, ResetAllowedMovesEvent,
     ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
-use crate::resources::deck::Deck;
+use crate::resources::deck::{Deck, NEUTRAL_CARD_IDX};
 use crate::resources::game_state::GameState;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
@@ -152,5 +152,73 @@ pub fn blink_non_selected_card(
                 }
             }
         }
+    }
+}
+
+pub fn card_swap(
+    mut deck: ResMut<Deck<'static>>,
+    mut transform_q: Query<(&mut Transform, &mut CardIndex, &mut CardOwner)>,
+    mut card_swap_rdr: EventReader<CardSwapEvent>,
+) {
+    for event in card_swap_rdr.iter() {
+        // saving the entity ids for swapping
+        let neutral_entity = deck.cards[NEUTRAL_CARD_IDX];
+        let swapping_entity = event.0;
+
+        let swapping_cardboard_bounds = deck.cardboards.get(&swapping_entity).unwrap().bounds;
+        let neutral_cardboard_bounds = deck.cardboards.get(&neutral_entity).unwrap().bounds;
+
+        // changing the bounds to make the appropriate checks when the card is moved from its place
+        for (k, v) in deck.cardboards.iter_mut() {
+            if *k == neutral_entity {
+                v.bounds = swapping_cardboard_bounds;
+            } else if *k == swapping_entity {
+                v.bounds = neutral_cardboard_bounds;
+            }
+        }
+
+        let (cen_transform, cen_card_index, cen_card_owner) = match transform_q.get(neutral_entity)
+        {
+            Ok(query) => query,
+            Err(e) => {
+                log::warn!("Error raised when swaping cards: {:?}", e);
+                return;
+            }
+        };
+
+        let (mut sw_transform, mut sw_card_index, mut sw_card_owner) =
+            match transform_q.get_mut(swapping_entity) {
+                Ok(query) => query,
+                Err(e) => {
+                    log::warn!("Error raised when swaping cards: {:?}", e);
+                    return;
+                }
+            };
+
+        // swapping the cards in the global array
+        deck.cards
+            .swap(cen_card_index.0 as usize, sw_card_index.0 as usize);
+
+        // saving temporary values for the swap
+        let temp_transform = sw_transform.clone();
+        let temp_card_index = sw_card_index.clone();
+        let temp_cardowner = sw_card_owner.clone();
+
+        *sw_transform = cen_transform.clone();
+        *sw_card_index = cen_card_index.clone();
+        *sw_card_owner = cen_card_owner.clone();
+
+        let (mut cen_transform, mut cen_card_index, mut cen_card_owner) =
+            match transform_q.get_mut(neutral_entity) {
+                Ok(query) => query,
+                Err(e) => {
+                    log::warn!("Error raised when swaping cards: {:?}", e);
+                    return;
+                }
+            };
+
+        *cen_transform = temp_transform;
+        *cen_card_index = temp_card_index;
+        *cen_card_owner = temp_cardowner;
     }
 }

@@ -28,10 +28,10 @@ use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
 use crate::components::guide::GuideText;
 use crate::events::{
-    ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
+    CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
     GenerateAllowedMovesEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
     PieceSelectEvent, RandomBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
-    ResetSelectedPieceColorEvent, CardMoveEvent,
+    ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -161,6 +161,7 @@ impl<T> BoardPlugin<T> {
         cards[1].is_mirrored = true;
 
         let mut deck_container = HashMap::with_capacity(5);
+        let mut card_entities = Vec::with_capacity(5);
 
         for i in 0..5 {
             let position = deck_options.position.xy() + positions[i];
@@ -206,10 +207,13 @@ impl<T> BoardPlugin<T> {
                     },
                 },
             );
+
+            card_entities.push(card_board_entity);
         }
 
         commands.insert_resource(Deck {
             cardboards: deck_container,
+            cards: card_entities,
         });
 
         commands.insert_resource(SelectedCard::default());
@@ -550,7 +554,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::board_input::reset_selected_piece_color)
                 .with_system(systems::board_input::generate_allowed_moves)
                 .with_system(systems::board_input::reset_allowed_moves)
-                .with_system(systems::board_input::move_piece::<T>),
+                .with_system(systems::board_input::move_piece::<T>)
+                .with_system(systems::card_input::card_swap),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();
@@ -565,7 +570,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
         app.add_event::<NextTurnEvent>();
         app.add_event::<RandomBotMoveEvent>();
         app.add_event::<MovePieceEvent>();
-        app.add_event::<CardMoveEvent>();
+        app.add_event::<CardSwapEvent>();
 
         log::info!("Loaded Board Plugin");
 

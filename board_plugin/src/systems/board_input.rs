@@ -6,7 +6,7 @@ use crate::components::coordinates::Coordinates;
 use crate::components::guide_text_timer::GuideTextTimer;
 use crate::components::pieces::{Piece, PieceKind};
 use crate::events::{
-    CardMoveEvent, ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent,
+    CardSwapEvent, ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent,
     MovePieceEvent, NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent,
     ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
@@ -260,7 +260,7 @@ pub fn move_piece<T>(
     pieces_q: Query<&Piece>,
     mut move_piece_rdr: EventReader<MovePieceEvent>,
     mut reset_selected_card_ewr: EventWriter<ResetSelectedCardColorEvent>,
-    mut card_move_ewr: EventWriter<CardMoveEvent>,
+    mut card_swap_ewr: EventWriter<CardSwapEvent>,
 ) {
     // TODO: for a better handling of a piece movement, it could be better to use a bundle
     // with a piece and a sprite
@@ -320,7 +320,7 @@ pub fn move_piece<T>(
         }
 
         selected_piece.clear();
-        card_move_ewr.send(CardMoveEvent(selected_card.entity.unwrap()));
+        card_swap_ewr.send(CardSwapEvent(selected_card.entity.unwrap()));
         reset_selected_card_ewr.send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
         selected_card.entity = None;
     }
