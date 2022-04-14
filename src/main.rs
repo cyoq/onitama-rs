@@ -3,17 +3,12 @@ use bevy::prelude::*;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::ai::human::Human;
+use board_plugin::resources::app_state::AppState;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
 use board_plugin::resources::game_state::{GameState, Player, PlayerType};
 use board_plugin::BoardPlugin;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum AppState {
-    InProgress,
-    Out,
-}
 
 fn main() {
     let mut app = App::new();

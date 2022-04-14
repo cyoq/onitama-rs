@@ -275,29 +275,22 @@ pub fn mirror_card(
 
         if let Ok(children) = tiles_q.get(event.0) {
             for child in children.iter() {
-                log::info!("got child: {:?}", child);
-                match sprites_tiles_q.get_mut(*child) {
-                    Ok((coordinates, mut sprite)) => {
-                        let mut tile_color;
+                if let Ok((coordinates, mut sprite)) = sprites_tiles_q.get_mut(*child) {
+                    let mut tile_color;
 
-                        // highlight the center
-                        if *coordinates == center {
-                            tile_color = board_assets.deck_card_center_material.color;
-                        } else {
-                            tile_color = board_assets.tile_material.color;
-                        }
-
-                        // highlight possible moves
-                        if move_tiles.contains(&coordinates) {
-                            tile_color = board_assets.deck_card_allowed_move_material.color;
-                        }
-
-                        sprite.color = tile_color;
+                    // highlight the center
+                    if *coordinates == center {
+                        tile_color = board_assets.deck_card_center_material.color;
+                    } else {
+                        tile_color = board_assets.tile_material.color;
                     }
-                    Err(e) => {
-                        log::warn!("Incorrect query to the sprite while mirroring: {:?}", e);
-                        continue;
+
+                    // highlight possible moves
+                    if move_tiles.contains(&coordinates) {
+                        tile_color = board_assets.deck_card_allowed_move_material.color;
                     }
+
+                    sprite.color = tile_color;
                 }
             }
         }

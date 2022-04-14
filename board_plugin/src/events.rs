@@ -1,4 +1,4 @@
-use crate::components::{card_index::CardIndex, coordinates::Coordinates};
+use crate::{components::{card_index::CardIndex, coordinates::Coordinates}, resources::tile_map::MoveResult};
 use bevy::prelude::*;
 
 // TODO: describe each event action
@@ -52,3 +52,6 @@ pub struct CardSwapEvent(pub Entity);
 
 #[derive(Debug, Clone, Copy)]
 pub struct MirrorCardEvent(pub Entity);
+
+#[derive(Debug, Clone, Copy)]
+pub struct ProcessWinConditionEvent(pub MoveResult);

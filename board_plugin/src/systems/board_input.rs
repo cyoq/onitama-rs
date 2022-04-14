@@ -7,8 +7,8 @@ use crate::components::guide_text_timer::GuideTextTimer;
 use crate::components::pieces::{Piece, PieceKind};
 use crate::events::{
     CardSwapEvent, ChangeGuideTextEvent, ColorSelectedPieceEvent, GenerateAllowedMovesEvent,
-    MovePieceEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ResetAllowedMovesEvent,
-    ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
+    MovePieceEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
+    ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
@@ -261,6 +261,7 @@ pub fn move_piece<T>(
     mut reset_selected_card_ewr: EventWriter<ResetSelectedCardColorEvent>,
     mut card_swap_ewr: EventWriter<CardSwapEvent>,
     mut next_turn_ewr: EventWriter<NextTurnEvent>,
+    mut process_win_condition_ewr: EventWriter<ProcessWinConditionEvent>,
 ) {
     // TODO: for a better handling of a piece movement, it could be better to use a bundle
     // with a piece and a sprite
@@ -323,6 +324,7 @@ pub fn move_piece<T>(
         card_swap_ewr.send(CardSwapEvent(selected_card.entity.unwrap()));
         reset_selected_card_ewr.send(ResetSelectedCardColorEvent(selected_card.entity.unwrap()));
         selected_card.entity = None;
+        process_win_condition_ewr.send(ProcessWinConditionEvent(move_result));
         next_turn_ewr.send(NextTurnEvent);
     }
 }

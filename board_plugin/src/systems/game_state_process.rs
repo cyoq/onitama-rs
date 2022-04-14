@@ -1,8 +1,15 @@
 use bevy::{log, prelude::*};
 
 use crate::{
-    events::{ChangeGuideTextEvent, NextTurnEvent, RandomBotMoveEvent, TurnProcessEvent},
-    resources::game_state::{GameState, PlayerColor, PlayerType},
+    events::{
+        ChangeGuideTextEvent, NextTurnEvent, ProcessWinConditionEvent, RandomBotMoveEvent,
+        TurnProcessEvent,
+    },
+    resources::{
+        app_state::AppState,
+        game_state::{GameState, PlayerColor, PlayerType},
+        tile_map::MoveResult,
+    },
 };
 
 pub fn turn_process(
@@ -41,5 +48,38 @@ pub fn next_turn_event(
         log::info!("GameState updated! {:?}", game_state);
 
         turn_process_ewr.send(TurnProcessEvent);
+    }
+}
+
+pub fn process_win_condition(
+    mut app_state: ResMut<State<AppState>>,
+    game_state: Res<GameState<'static>>,
+    mut check_win_condition_rdr: EventReader<ProcessWinConditionEvent>,
+    mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
+) {
+    for event in check_win_condition_rdr.iter() {
+        let mut is_end = false;
+
+        if event.0 == MoveResult::Win {
+            let color = match game_state.curr_color {
+                PlayerColor::Red => "Red".to_owned(),
+                PlayerColor::Blue => "Blue".to_owned(),
+            };
+            change_guide_text_ewr.send(ChangeGuideTextEvent {
+                text: format!("{} has won!", color),
+            });
+            is_end = true;
+        }
+
+        if game_state.turn > 200 {
+            change_guide_text_ewr.send(ChangeGuideTextEvent {
+                text: format!("It is a tie!"),
+            });
+            is_end = true;
+        }
+
+        if is_end {
+            app_state.set(AppState::Out).unwrap();
+        }
     }
 }
