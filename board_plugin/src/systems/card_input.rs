@@ -177,6 +177,7 @@ pub fn card_swap(
             }
         }
 
+        // reading the center card properties
         let (cen_transform, cen_card_index, cen_card_owner) = match transform_q.get(neutral_entity)
         {
             Ok(query) => query,
@@ -186,6 +187,7 @@ pub fn card_swap(
             }
         };
 
+        // preparing swapping card properties for the change
         let (mut sw_transform, mut sw_card_index, mut sw_card_owner) =
             match transform_q.get_mut(swapping_entity) {
                 Ok(query) => query,
@@ -208,6 +210,7 @@ pub fn card_swap(
         *sw_card_index = cen_card_index.clone();
         *sw_card_owner = cen_card_owner.clone();
 
+        // changing the center card
         let (mut cen_transform, mut cen_card_index, mut cen_card_owner) =
             match transform_q.get_mut(neutral_entity) {
                 Ok(query) => query,

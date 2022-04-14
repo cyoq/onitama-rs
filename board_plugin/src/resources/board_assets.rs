@@ -48,5 +48,7 @@ pub struct BoardAssets {
     ///
     pub guide_text_size: f32,
     ///
+    pub turn_text_size: f32,
+    ///
     pub font: Handle<Font>,
 }

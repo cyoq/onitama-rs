@@ -26,7 +26,7 @@ use resources::game_state::PlayerColor;
 use crate::bounds::Bounds2;
 use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
-use crate::components::guide::GuideText;
+use crate::components::texts::{GuideText, TurnText};
 use crate::events::{
     CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent, ColorSelectedPieceEvent,
     GenerateAllowedMovesEvent, MovePieceEvent, NextTurnEvent, NoCardSelectedEvent,
@@ -226,7 +226,7 @@ impl<T> BoardPlugin<T> {
             .insert(GuideText)
             .insert(Transform::from_translation(Vec3::new(
                 0.0,
-                window.height / 2.4 as f32,
+                window.height / 2.4,
                 1.,
             )))
             .insert(GlobalTransform::default())
@@ -237,6 +237,28 @@ impl<T> BoardPlugin<T> {
                     &board_assets,
                     board_assets.guide_text_size,
                     Vec2::new(0., 0.),
+                    Color::WHITE,
+                );
+            });
+
+        commands
+            .spawn()
+            .insert(Name::new("Turn text"))
+            .insert(TurnText)
+            .insert(Transform::from_translation(Vec3::new(
+                -window.width / 2. + window.width / 8.,
+                window.height / 2.5,
+                1.,
+            )))
+            .insert(GlobalTransform::default())
+            .with_children(|parent| {
+                Self::spawn_text(
+                    parent,
+                    "Red turn: 0".to_owned(),
+                    &board_assets,
+                    board_assets.turn_text_size,
+                    Vec2::new(0., 0.),
+                    Color::RED,
                 );
             });
     }
@@ -277,6 +299,7 @@ impl<T> BoardPlugin<T> {
                             (x as f32 * tile_size) - (tile_size / 4.),
                             (y as f32 * tile_size) + (tile_size / 8.),
                         ),
+                        Color::WHITE,
                     );
                 }
 
@@ -291,6 +314,7 @@ impl<T> BoardPlugin<T> {
                             (x as f32 * tile_size) + (tile_size / 2.),
                             (y as f32 * tile_size) - (tile_size / 1.5) - 10.,
                         ),
+                        Color::WHITE,
                     );
                 }
 
@@ -399,13 +423,14 @@ impl<T> BoardPlugin<T> {
         board_assets: &BoardAssets,
         tile_size: f32,
         position: Vec2,
+        color: Color,
     ) {
         parent.spawn_bundle(Text2dBundle {
             text: Text {
                 sections: vec![TextSection {
                     value: text,
                     style: TextStyle {
-                        color: Color::WHITE,
+                        color: color,
                         font: board_assets.font.clone(),
                         font_size: tile_size,
                     },
@@ -541,7 +566,8 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(
                     systems::board_input::process_selected_tile.label("color_selected_tile"),
                 )
-                .with_system(systems::guide_text_change::process_guide_text)
+                .with_system(systems::text_change::process_guide_text)
+                .with_system(systems::text_change::change_turn_text)
                 .with_system(systems::card_input::color_selected_card.label("color_selected_card"))
                 .with_system(
                     systems::card_input::reset_selected_card_color
@@ -549,7 +575,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("color_selected_card")
                         .after("color_selected_tile"),
                 )
-                .with_system(systems::guide_text_change::process_guide_text_change_timer)
+                .with_system(systems::text_change::process_guide_text_change_timer)
                 .with_system(systems::board_input::color_selected_piece) // .with_system(systems::card_input::blink_non_selected_card),
                 .with_system(systems::board_input::reset_selected_piece_color)
                 .with_system(systems::board_input::generate_allowed_moves)

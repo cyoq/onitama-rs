@@ -6,8 +6,8 @@ use board_plugin::ai::human::Human;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
-use board_plugin::BoardPlugin;
 use board_plugin::resources::game_state::{GameState, Player, PlayerType};
+use board_plugin::BoardPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -127,6 +127,7 @@ fn setup_board(
             ..Default::default()
         },
         guide_text_size: 80.,
+        turn_text_size: 40.,
         font: asset_server.load("fonts/pixeled.ttf"),
     });
     // Plugin activation
