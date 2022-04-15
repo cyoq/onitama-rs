@@ -6,18 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 board_plugin = { path = "board_plugin" }
+menu_plugin = { path = "menu_plugin" }
 
 # Hierarchy inspector debug
 bevy-inspector-egui = { version = "0.9", optional = true }
 
 [workspace]
 members = [
-    "board_plugin"
+    "board_plugin",
+    "menu_plugin"
 ]
 
 [features]
 default = []
-debug = ["board_plugin/debug", "bevy-inspector-egui"]
+debug = ["board_plugin/debug", "menu_plugin/debug", "bevy-inspector-egui"]
 
 # Enable optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
