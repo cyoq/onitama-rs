@@ -3,7 +3,7 @@ use crate::{
     resources::{
         board::Board,
         game_state::PlayerColor,
-        tile_map::{BLUE_TEMPLE, RED_TEMPLE, MoveResult},
+        tile_map::{MoveResult, BLUE_TEMPLE, RED_TEMPLE},
     },
 };
 
@@ -11,9 +11,14 @@ use crate::{
 pub struct Evaluation;
 
 impl Evaluation {
-    pub fn evaluate(board: &Board, depth: u8, curr_color: &PlayerColor, move_result: Option<&MoveResult>) -> i32 {
-
+    pub fn evaluate(
+        board: &Board,
+        depth: u8,
+        curr_color: &PlayerColor,
+        move_result: Option<&MoveResult>,
+    ) -> i32 {
         let mut sign = 1;
+
         let curr_color = curr_color.enemy();
         if curr_color == PlayerColor::Blue {
             sign = -1;
@@ -21,7 +26,7 @@ impl Evaluation {
 
         if let Some(move_result) = move_result {
             if *move_result == MoveResult::Win {
-                return sign * 10000;
+                return sign * 1000;
             }
         }
 
@@ -63,8 +68,7 @@ impl Evaluation {
 
                     // how king is far from temple
                     if piece.kind == PieceKind::King && piece.color == curr_color {
-                        temple_distance =
-                            Self::manhattan_distance(king_coords, enemy_temple);
+                        temple_distance = Self::manhattan_distance(king_coords, enemy_temple);
                     }
 
                     if piece.color != curr_color {

@@ -74,7 +74,7 @@ fn setup_board(
         player_type: PlayerType::AlphaBeta,
     };
 
-    commands.insert_resource(GameState::new(first_player, second_player));
+    commands.insert_resource(GameState::new(second_player, first_player));
 
     // Board assets
     commands.insert_resource(BoardAssets {

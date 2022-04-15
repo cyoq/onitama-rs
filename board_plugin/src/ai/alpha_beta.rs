@@ -18,16 +18,11 @@ pub struct MoveEvaluation {
 #[derive(Debug, Clone)]
 pub struct AlphaBetaAgent {
     pub max_depth: u8,
-    // pub analysed_moves: BinaryHeap<MoveEvaluation>,
 }
 
 impl AlphaBetaAgent {
     pub fn new(max_depth: u8) -> Self {
-        // let heap = BinaryHeap::new();
-        Self {
-            max_depth,
-            // analysed_moves: heap,
-        }
+        Self { max_depth }
     }
 
     fn alpha_beta(
@@ -45,6 +40,8 @@ impl AlphaBetaAgent {
         let player_color = game_state.curr_color;
 
         if depth == self.max_depth || move_result == Some(&MoveResult::Win) {
+            // log::info!("Evaluation: {:?} for color {:?}", 
+            //     Evaluation::evaluate(&board, depth, &player_color, move_result), player_color);
             return (
                 None,
                 Evaluation::evaluate(&board, depth, &player_color, move_result),
@@ -76,7 +73,7 @@ impl AlphaBetaAgent {
             best_score = std::i32::MAX;
         }
 
-        for mov in possible_moves.iter() {
+        'br: for mov in possible_moves.iter() {
             let possible_piece_lose =
                 board.tile_map.map[mov.to.y as usize][mov.to.x as usize].clone();
 
@@ -109,17 +106,23 @@ impl AlphaBetaAgent {
                     best_score = score;
                     best_move = Some(*mov);
                 }
+
+                if score >= beta {
+                    break 'br;
+                }
+
                 alpha = std::cmp::max(alpha, score);
             } else {
                 if score < best_score {
                     best_score = score;
                     best_move = Some(*mov);
                 }
-                beta = std::cmp::min(beta, score);
-            }
 
-            if alpha >= beta {
-                break;
+                if score <= alpha {
+                    break 'br;
+                }
+
+                beta = std::cmp::min(beta, score);
             }
         }
 
