@@ -90,9 +90,9 @@ impl AlphaBetaAgent {
                 depth + 1,
                 alpha,
                 beta,
-                &mut board.clone(),
-                &mut game_state.clone(),
-                &mut deck.clone(),
+                board,
+                game_state,
+                deck,
                 Some(&result),
                 positions,
             );
