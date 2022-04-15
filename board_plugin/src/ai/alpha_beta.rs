@@ -39,13 +39,15 @@ impl AlphaBetaAgent {
         game_state: &mut GameState,
         deck: &mut Deck,
         move_result: Option<&MoveResult>,
+        positions: &mut i32,
     ) -> (Option<Move>, i32) {
+        *positions += 1;
         let player_color = game_state.curr_color;
 
         if depth == self.max_depth || move_result == Some(&MoveResult::Win) {
             return (
                 None,
-                Evaluation::evaluate(&board, &player_color, move_result),
+                Evaluation::evaluate(&board, depth, &player_color, move_result),
             );
         }
 
@@ -62,7 +64,11 @@ impl AlphaBetaAgent {
             .generate_possible_moves_for_card(&player_color, &card);
 
         let mut best_score;
-        let mut best_move = Move::default();
+        let mut best_move = if possible_moves.is_empty() {
+            None
+        } else {
+            Some(possible_moves[0])
+        };
 
         if player_color == PlayerColor::Red {
             best_score = std::i32::MIN;
@@ -70,32 +76,11 @@ impl AlphaBetaAgent {
             best_score = std::i32::MAX;
         }
 
-        // let mut board = board.clone();
-        // let mut game_state = game_state.clone();
-        // let mut deck = deck.clone();
-
         for mov in possible_moves.iter() {
             let possible_piece_lose =
                 board.tile_map.map[mov.to.y as usize][mov.to.x as usize].clone();
-            // log::info!("================BEFORE============");
-            // log::info!("Depth is {:?}", depth);
-            // log::info!("Move is {:?}", mov);
-            // log::info!("GameState is {:?}", game_state);
-            // log::info!("Card idx: {:?}", card_idx);
-            // log::info!("Deck is {:?}", deck.cards);
-            // let c = deck
-            //     .cards
-            //     .iter()
-            //     .map(|c| deck.cardboards.get(&c).unwrap().card.name)
-            //     .collect::<Vec<_>>();
-            // log::info!("Cards are {:?}", c);
-            // log::info!("Used card is: {:?}", c[2]);
-            // log::info!("Possible piece lose {:?}", possible_piece_lose);
-            // log::info!("TileMap is {}", board.tile_map.console_output());
-            // log::info!("Best score: {}", best_score);
-            let result = board.tile_map.make_a_move(mov.from, mov.to);
 
-            // log::info!("Result {:?}", result);
+            let result = board.tile_map.make_a_move(mov.from, mov.to);
 
             game_state.next_turn();
             deck.swap_card_with_neutral(card_idx);
@@ -105,10 +90,11 @@ impl AlphaBetaAgent {
                 depth + 1,
                 alpha,
                 beta,
-                board,
-                game_state,
-                deck,
+                &mut board.clone(),
+                &mut game_state.clone(),
+                &mut deck.clone(),
                 Some(&result),
+                positions,
             );
 
             // Undo all made moves
@@ -118,34 +104,16 @@ impl AlphaBetaAgent {
             game_state.undo_next_turn();
             deck.swap_card_with_neutral(card_idx);
 
-            // log::info!("==================AFTER============");
-            // log::info!("Depth is {:?}", depth);
-            // log::info!("Move is {:?}", mov);
-            // log::info!("GameState is {:?}", game_state);
-            // log::info!("Card idx: {:?}", card_idx);
-            // log::info!("Deck is {:?}", deck.cards);
-            // let c = deck
-            //     .cards
-            //     .iter()
-            //     .map(|c| deck.cardboards.get(&c).unwrap().card.name)
-            //     .collect::<Vec<_>>();
-            // log::info!("Cards are {:?}", c);
-            // log::info!("Used card is: {:?}", c[2]);
-            // log::info!("Possible piece lose {:?}", possible_piece_lose);
-            // log::info!("Result {:?}", result);
-            // log::info!("TileMap is {}", board.tile_map.console_output());
-            // log::info!("Best score: {}", best_score);
-
             if player_color == PlayerColor::Red {
                 if score > best_score {
                     best_score = score;
-                    best_move = *mov;
+                    best_move = Some(*mov);
                 }
                 alpha = std::cmp::max(alpha, score);
             } else {
                 if score < best_score {
                     best_score = score;
-                    best_move = *mov;
+                    best_move = Some(*mov);
                 }
                 beta = std::cmp::min(beta, score);
             }
@@ -155,13 +123,16 @@ impl AlphaBetaAgent {
             }
         }
 
-        (Some(best_move), best_score)
+        (best_move, best_score)
     }
 }
 
 impl Agent for AlphaBetaAgent {
     fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move) {
         let cards = deck.get_player_cards(game_state);
+
+        let mut positions = 0;
+
         let result = self.alpha_beta(
             0,
             std::i32::MIN,
@@ -170,8 +141,11 @@ impl Agent for AlphaBetaAgent {
             &mut game_state.clone(),
             &mut deck.clone(),
             None,
+            &mut positions,
         );
         log::info!("Evaluation score: {:?}", result.1);
+        log::info!("Analyzed over {:?} positions", positions);
+
         (cards[0].0, result.0.unwrap())
     }
 

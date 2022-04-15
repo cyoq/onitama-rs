@@ -11,7 +11,7 @@ use crate::{
 pub struct Evaluation;
 
 impl Evaluation {
-    pub fn evaluate(board: &Board, curr_color: &PlayerColor, move_result: Option<&MoveResult>) -> i32 {
+    pub fn evaluate(board: &Board, depth: u8, curr_color: &PlayerColor, move_result: Option<&MoveResult>) -> i32 {
 
         let mut sign = 1;
         let curr_color = curr_color.enemy();
@@ -77,7 +77,7 @@ impl Evaluation {
                 }
             }
         }
-        sign * (5 * piece_score_sum - 2 * temple_distance - 3 * close_enemies)
+        sign * (10 * piece_score_sum - 2 * temple_distance - 5 * close_enemies - 5 * depth as i32)
     }
 
     fn manhattan_distance(from: Coordinates, to: Coordinates) -> i32 {
