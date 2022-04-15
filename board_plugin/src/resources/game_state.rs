@@ -15,6 +15,14 @@ impl PlayerColor {
             PlayerColor::Blue => PlayerColor::Red,
         };
     }
+
+    #[inline]
+    pub fn enemy(&self) -> PlayerColor {
+        match self {
+            PlayerColor::Red => PlayerColor::Blue,
+            PlayerColor::Blue => PlayerColor::Red,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -24,13 +32,13 @@ pub enum PlayerType {
     AlphaBeta,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Player<'a> {
     pub agent: &'a dyn Agent,
     pub player_type: PlayerType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GameState<'a> {
     pub players: [Player<'a>; 2],
     pub turn: u16,
@@ -49,13 +57,20 @@ impl<'a> GameState<'a> {
     }
 
     #[inline]
-    pub fn get_current_player(&self) -> &'a Player {
+    pub fn get_current_player(&self) -> &Player {
         &self.players[self.current_player_idx]
     }
 
     #[inline]
     pub fn next_turn(&mut self) {
         self.turn += 1;
+        self.curr_color.switch();
+        self.current_player_idx = (self.current_player_idx + 1) % 2;
+    }
+
+    #[inline]
+    pub fn undo_next_turn(&mut self) {
+        self.turn -= 1;
         self.curr_color.switch();
         self.current_player_idx = (self.current_player_idx + 1) % 2;
     }

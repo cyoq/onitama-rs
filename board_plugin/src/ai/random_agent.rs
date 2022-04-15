@@ -1,11 +1,11 @@
-use bevy::{prelude::Entity, log};
+use bevy::{log, prelude::Entity};
 use rand::Rng;
 
-use crate::resources::{tile_map::Move, deck::Deck, game_state::GameState, board::Board};
+use crate::resources::{board::Board, deck::Deck, game_state::GameState, tile_map::Move};
 
 use super::agent::Agent;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RandomAgent;
 
 impl Agent for RandomAgent {
@@ -24,4 +24,9 @@ impl Agent for RandomAgent {
 
         (moves.card, *mov)
     }
+
+    fn clone_dyn(&self) -> Box<dyn Agent> {
+        Box::new(self.clone())
+    }
+    
 }

@@ -29,10 +29,9 @@ use crate::components::card_index::CardIndex;
 use crate::components::texts::{GuideText, TurnText};
 use crate::events::{
     BotMakeMoveEvent, CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent,
-    ColorSelectedPieceEvent, GenerateAllowedMovesEvent, MirrorCardEvent, MovePieceEvent,
-    NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
-    GenerateBotMoveEvent, ResetAllowedMovesEvent, ResetSelectedCardColorEvent,
-    ResetSelectedPieceColorEvent,
+    ColorSelectedPieceEvent, GenerateAllowedMovesEvent, GenerateBotMoveEvent, MirrorCardEvent,
+    MovePieceEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
+    ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
@@ -562,16 +561,21 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             SystemSet::on_update(self.running_state.clone())
                 .with_system(
                     systems::game_state_process::process_win_condition
-                        .label("process_win_condition")
-                        .before("next_turn_event")
-                        .after("process_guide_text"),
+                        .label("process_win_condition"),
+                )
+                .with_system(
+                    systems::text_change::process_guide_text
+                        .label("process_guide_text")
+                        .after("process_win_condition"),
+                )
+                .with_system(
+                    systems::game_state_process::turn_process.before("process_win_condition"),
                 )
                 .with_system(
                     systems::game_state_process::next_turn_event
                         .label("next_turn_event")
                         .after("process_win_condition"),
                 )
-                .with_system(systems::game_state_process::turn_process.after("next_turn_event"))
                 .with_system(
                     systems::ai_input::generate_bot_move
                         .label("bot_generate_move")
@@ -590,11 +594,6 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::card_input::card_selection_handling.after("input_handling"))
                 .with_system(
                     systems::board_input::process_selected_tile.label("color_selected_tile"),
-                )
-                .with_system(
-                    systems::text_change::process_guide_text
-                        .label("process_guide_text")
-                        .before("process_win_condition"),
                 )
                 .with_system(systems::text_change::change_turn_text)
                 .with_system(systems::card_input::color_selected_card.label("color_selected_card"))

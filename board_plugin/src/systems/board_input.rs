@@ -76,6 +76,7 @@ pub fn process_selected_tile(
     mut move_piece_ewr: EventWriter<MovePieceEvent>,
 ) {
     for event in tile_trigger_event_rdr.iter() {
+        log::info!("Selected piece: {:?}", selected_piece);
         // if no cards selected, do not allow to choose a piece
         if selected_card.entity == None {
             change_guide_text_ewr.send(ChangeGuideTextEvent {

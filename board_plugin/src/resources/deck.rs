@@ -15,13 +15,14 @@ pub const NEUTRAL_CARD_IDX: usize = 2;
 const RED_PLAYER_FIRST_CARD: usize = 3;
 const RED_PLAYER_SECOND_CARD: usize = 4;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Deck<'a> {
     pub cardboards: HashMap<Entity, CardBoard<'a>>,
     pub cards: Vec<Entity>,
 }
 
 impl<'a> Deck<'a> {
+    #[inline]
     pub fn get_player_cards(&self, game_state: &GameState) -> [(Entity, &Card<'a>); 2] {
         if game_state.curr_color == PlayerColor::Blue {
             return [
@@ -61,5 +62,14 @@ impl<'a> Deck<'a> {
                     .card,
             ),
         ]
+    }
+
+    #[inline]
+    pub fn swap_card_with_neutral(&mut self, card_idx: usize) {
+        if card_idx < 2 {
+            self.cardboards.get_mut(&self.cards[card_idx]).unwrap().card.is_mirrored = false;
+            self.cardboards.get_mut(&self.cards[NEUTRAL_CARD_IDX]).unwrap().card.is_mirrored = true;
+        }
+        self.cards.swap(card_idx, NEUTRAL_CARD_IDX);
     }
 }

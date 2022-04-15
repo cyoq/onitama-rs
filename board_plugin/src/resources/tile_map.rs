@@ -7,12 +7,15 @@ use std::ops::{Deref, DerefMut};
 
 use super::card::Card;
 use super::deck::Deck;
-use super::game_state::{GameState, PlayerColor::*};
+use super::game_state::{
+    GameState,
+    PlayerColor::{self, *},
+};
 
 const BOARD_SIZE: usize = 5;
 
-const RED_TEMPLE: Coordinates = Coordinates { x: 2, y: 0 };
-const BLUE_TEMPLE: Coordinates = Coordinates { x: 2, y: 4 };
+pub const RED_TEMPLE: Coordinates = Coordinates { x: 2, y: 0 };
+pub const BLUE_TEMPLE: Coordinates = Coordinates { x: 2, y: 4 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MoveResult {
@@ -26,6 +29,15 @@ pub enum MoveResult {
 pub struct Move {
     pub from: Coordinates,
     pub to: Coordinates,
+}
+
+impl Default for Move {
+    fn default() -> Self {
+        Self {
+            from: Coordinates { x: 0, y: 0 },
+            to: Coordinates { x: 0, y: 0 },
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -114,7 +126,7 @@ impl TileMap {
         &self,
         coordinates: &Coordinates,
         card: &Card,
-        game_state: &GameState<'static>,
+        game_state: &GameState,
     ) -> Vec<Coordinates> {
         card.directions
             .iter()
@@ -173,6 +185,34 @@ impl TileMap {
         MoveResult::Move
     }
 
+    pub fn undo_move(
+        &mut self,
+        from: Coordinates,
+        to: Coordinates,
+        prev_move_result: &MoveResult,
+        tile: Tile,
+    ) {
+        let from_tile = self.map[from.y as usize][from.x as usize];
+        let to_tile = self.map[to.y as usize][to.x as usize];
+
+        if *prev_move_result == MoveResult::Capture || *prev_move_result == MoveResult::Win {
+            self.map[to.y as usize][to.x as usize] = from_tile;
+            self.map[from.y as usize][from.x as usize] = tile;
+            return;
+        }
+
+        if from_tile.piece == None {
+            panic!("Cancelling empty tile");
+        }
+
+        if to_tile.piece != None {
+            panic!("Moving to the non-empty tile");
+        }
+
+        self.map[to.y as usize][to.x as usize] = from_tile;
+        self.map[from.y as usize][from.x as usize] = to_tile;
+    }
+
     pub fn generate_all_possible_moves(
         &self,
         game_state: &GameState,
@@ -180,52 +220,58 @@ impl TileMap {
     ) -> Vec<PossibleMoves> {
         let cards = deck.get_player_cards(game_state);
         let mut possible_moves = Vec::with_capacity(2);
-        for (entity, card) in cards {
-            let mut moves = vec![];
-            for (y, line) in self.map.iter().enumerate() {
-                for (x, tile) in line.iter().enumerate() {
-                    if let Some(piece) = tile.piece {
-                        if piece.color != game_state.curr_color {
-                            continue;
-                        }
+        for (e, card) in cards.iter() {
+            let moves = self.generate_possible_moves_for_card(&game_state.curr_color, card);
+            possible_moves.push(PossibleMoves { card: *e, moves });
+        }
+        possible_moves
+    }
 
-                        let coordinates = Coordinates {
-                            x: x as u8,
-                            y: y as u8,
-                        };
-                        for dir in card.directions {
-                            let mov = if card.is_mirrored {
-                                Move {
-                                    from: coordinates,
-                                    to: coordinates + (dir.0, -dir.1),
-                                }
-                            } else {
-                                Move {
-                                    from: coordinates,
-                                    to: coordinates + *dir,
-                                }
-                            };
+    pub fn generate_possible_moves_for_card(
+        &self,
+        curr_player_color: &PlayerColor,
+        card: &Card,
+    ) -> Vec<Move> {
+        let mut moves = vec![];
+        for (y, line) in self.map.iter().enumerate() {
+            for (x, tile) in line.iter().enumerate() {
+                if let Some(piece) = tile.piece {
+                    if piece.color != *curr_player_color {
+                        continue;
+                    }
 
-                            if mov.to.x < 5
-                                && mov.to.y < 5
-                                && match self.map[mov.to.y as usize][mov.to.x as usize].piece {
-                                    Some(piece) => piece.color != game_state.curr_color,
-                                    // no piece - it is good to go
-                                    None => true,
-                                }
-                            {
-                                moves.push(mov);
+                    let coordinates = Coordinates {
+                        x: x as u8,
+                        y: y as u8,
+                    };
+                    for dir in card.directions {
+                        let mov = if card.is_mirrored {
+                            Move {
+                                from: coordinates,
+                                to: coordinates + (dir.0, -dir.1),
                             }
+                        } else {
+                            Move {
+                                from: coordinates,
+                                to: coordinates + *dir,
+                            }
+                        };
+
+                        if mov.to.x < 5
+                            && mov.to.y < 5
+                            && match self.map[mov.to.y as usize][mov.to.x as usize].piece {
+                                Some(piece) => piece.color != *curr_player_color,
+                                // no piece - it is good to go
+                                None => true,
+                            }
+                        {
+                            moves.push(mov);
                         }
                     }
                 }
             }
-            possible_moves.push(PossibleMoves {
-                card: entity,
-                moves,
-            });
         }
-        possible_moves
+        moves
     }
 
     #[inline]

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+use board_plugin::ai::alpha_beta::AlphaBetaAgent;
 use board_plugin::ai::human::Human;
 use board_plugin::ai::random_agent::RandomAgent;
 use board_plugin::resources::app_state::AppState;
@@ -69,8 +70,8 @@ fn setup_board(
     };
 
     let second_player = Player {
-        agent: &RandomAgent,
-        player_type: PlayerType::Random,
+        agent: &AlphaBetaAgent { max_depth: 10 },
+        player_type: PlayerType::AlphaBeta,
     };
 
     commands.insert_resource(GameState::new(first_player, second_player));
