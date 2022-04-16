@@ -2,6 +2,7 @@ pub mod ai;
 pub mod bounds;
 pub mod components;
 pub mod events;
+pub mod menu_plugin;
 pub mod resources;
 pub mod systems;
 
@@ -16,12 +17,13 @@ use components::board_tile::BoardTile;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceKind};
 use events::TurnProcessEvent;
+use resources::app_state::AppState;
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::card::Card;
 use resources::deck_options::DeckOptions;
-use resources::game_state::PlayerColor;
+use resources::game_state::{PlayerColor, GameState};
 
 use crate::bounds::Bounds2;
 use crate::components::card_board::{CardBoard, CardOwner};
@@ -37,6 +39,7 @@ use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
 use crate::resources::selected::{SelectedCard, SelectedPiece};
+use crate::resources::text_handler::TextHandler;
 use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
@@ -46,6 +49,7 @@ use PlayerColor::*;
 
 pub struct BoardPlugin<T> {
     pub running_state: T,
+    pub cleanup_state: T,
 }
 
 impl<T> BoardPlugin<T> {
@@ -84,7 +88,7 @@ impl<T> BoardPlugin<T> {
         );
         log::info!("board size: {}", board_size);
 
-        commands
+        let board_entity = commands
             .spawn()
             .insert(Name::new("GameBoard"))
             .insert(Transform::from_translation(options.position))
@@ -109,7 +113,8 @@ impl<T> BoardPlugin<T> {
                     options.tile_padding,
                     &board_assets,
                 );
-            });
+            })
+            .id();
 
         commands.insert_resource(Board {
             bounds: Bounds2 {
@@ -119,6 +124,7 @@ impl<T> BoardPlugin<T> {
             tile_size,
             padding: options.tile_padding,
             tile_map,
+            entity: board_entity,
         });
 
         // Spawn boards with cards movements
@@ -220,7 +226,7 @@ impl<T> BoardPlugin<T> {
         commands.insert_resource(SelectedPiece::default());
 
         // Spawn a guide text
-        commands
+        let guide_text = commands
             .spawn()
             .insert(Name::new("Guide text"))
             .insert(GuideText)
@@ -239,9 +245,11 @@ impl<T> BoardPlugin<T> {
                     Vec2::new(0., 0.),
                     Color::WHITE,
                 );
-            });
+            })
+            .id();
 
-        commands
+        // Spawn a turn text
+        let turn_text = commands
             .spawn()
             .insert(Name::new("Turn text"))
             .insert(TurnText)
@@ -260,7 +268,13 @@ impl<T> BoardPlugin<T> {
                     Vec2::new(0., 0.),
                     Color::RED,
                 );
-            });
+            })
+            .id();
+
+        commands.insert_resource(TextHandler {
+            turn_text,
+            guide_text,
+        });
     }
 
     pub fn adaptive_tile_size(
@@ -548,6 +562,31 @@ impl<T> BoardPlugin<T> {
     pub fn start_game(mut turn_process_ewr: EventWriter<TurnProcessEvent>) {
         turn_process_ewr.send(TurnProcessEvent);
     }
+
+    pub fn cleanup_game(
+        mut commands: Commands,
+        board: Res<Board>,
+        deck: Res<Deck>,
+        text_handler: Res<TextHandler>,
+        mut game_state: ResMut<GameState>
+    ) {
+        commands.entity(board.entity).despawn_recursive();
+        commands.remove_resource::<Board>();
+
+        for (entity, _) in deck.cardboards.iter() {
+            commands.entity(*entity).despawn_recursive();
+        }
+        commands.remove_resource::<Deck>();
+
+        commands.entity(text_handler.turn_text).despawn_recursive();
+        commands.entity(text_handler.guide_text).despawn_recursive();
+        commands.remove_resource::<TextHandler>();
+
+        commands.remove_resource::<SelectedPiece>();
+        commands.remove_resource::<SelectedCard>();
+
+        game_state.clear();
+    }
 }
 
 impl<T: StateData> Plugin for BoardPlugin<T> {
@@ -611,6 +650,9 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::board_input::move_piece::<T>)
                 .with_system(systems::card_input::card_swap)
                 .with_system(systems::card_input::mirror_card),
+        );
+        app.add_system_set(
+            SystemSet::on_exit(self.cleanup_state.clone()).with_system(Self::cleanup_game),
         );
         app.add_event::<PieceSelectEvent>();
         app.add_event::<ColorSelectedCardEvent>();

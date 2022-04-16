@@ -12,6 +12,7 @@ pub struct Board {
     pub tile_size: f32,
     pub padding: f32,
     pub tile_map: TileMap,
+    pub entity: Entity,
 }
 
 impl Board {

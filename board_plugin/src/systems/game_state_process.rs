@@ -79,7 +79,7 @@ pub fn process_win_condition(
         }
 
         if is_end {
-            app_state.set(AppState::Out).unwrap();
+            app_state.set(AppState::GameEnd).unwrap();
         }
     }
 }

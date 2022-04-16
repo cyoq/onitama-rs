@@ -57,6 +57,13 @@ impl GameState {
     }
 
     #[inline]
+    pub fn clear(&mut self) {
+        self.turn = 0;
+        self.current_player_idx = 0;
+        self.curr_color = PlayerColor::Red;
+    }
+
+    #[inline]
     pub fn get_current_player(&self) -> &Player {
         &self.players[self.current_player_idx]
     }
