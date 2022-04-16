@@ -49,12 +49,22 @@ fn input_handler(
                 *color = button_colors.pressed.into();
                 match action {
                     ButtonAction::NewSetup => {
+                        if state.current() == &AppState::InProgress {
+                            log::info!("Creating a new setup during the game");
+                            state.set(AppState::GameEnd).unwrap();
+                        }
+
                         if state.current() == &AppState::GameEnd {
                             log::info!("Going to the main menu!");
                             state.set(AppState::MainMenu).unwrap();
                         }
                     }
                     ButtonAction::NewGame => {
+                        if state.current() == &AppState::InProgress {
+                            log::info!("Creating a new game during the game");
+                            state.set(AppState::GameEnd).unwrap();
+                        }
+
                         if state.current() == &AppState::GameEnd {
                             log::info!("Creating a new game after a game end!");
                             state.set(AppState::InProgress).unwrap();
