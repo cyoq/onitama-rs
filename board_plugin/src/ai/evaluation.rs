@@ -14,7 +14,7 @@ impl Evaluation {
     pub fn evaluate(
         board: &Board,
         curr_color: &PlayerColor,
-        move_result: Option<&MoveResult>,
+        move_result: &Option<MoveResult>,
     ) -> i32 {
         let mut sign = 1;
 

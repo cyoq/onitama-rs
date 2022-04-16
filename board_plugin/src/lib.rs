@@ -5,6 +5,7 @@ pub mod events;
 pub mod menu_plugin;
 pub mod resources;
 pub mod systems;
+pub mod button_plugin;
 
 use bevy::ecs::schedule::StateData;
 use bevy::ecs::system::EntityCommands;

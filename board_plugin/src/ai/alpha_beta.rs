@@ -32,16 +32,16 @@ impl AlphaBetaAgent {
         board: &mut Board,
         game_state: &mut GameState,
         deck: &mut Deck,
-        move_result: Option<&MoveResult>,
+        move_result: Option<MoveResult>,
         positions: &mut i32,
     ) -> (Option<Move>, i32) {
         *positions += 1;
         let player_color = game_state.curr_color;
 
-        if depth == self.max_depth || move_result == Some(&MoveResult::Win) {
+        if depth == self.max_depth || move_result == Some(MoveResult::Win) {
             return (
                 None,
-                Evaluation::evaluate(&board, &player_color, move_result),
+                Evaluation::evaluate(&board, &player_color, &move_result),
             );
         }
 
@@ -81,7 +81,7 @@ impl AlphaBetaAgent {
                     board,
                     game_state,
                     deck,
-                    Some(&result),
+                    Some(result),
                     positions,
                 );
 
@@ -114,6 +114,10 @@ impl AlphaBetaAgent {
                     }
 
                     beta = std::cmp::min(beta, score);
+                }
+
+                if alpha >= beta {
+                    break 'br;
                 }
             }
         }
