@@ -18,29 +18,19 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(WindowDescriptor {
-        width: 1280.,
-        height: 720.,
+        width: 1320.,
+        height: 960.,
         title: "Onitama in Rust".to_string(),
         ..Default::default()
     })
     .add_plugins(DefaultPlugins);
 
-    app.add_state(AppState::Out);
+    app.add_state(AppState::MainMenu);
     app.add_plugin(BoardPlugin {
         running_state: AppState::InProgress,
         cleanup_state: AppState::GameEnd,
     })
     .add_startup_system(setup_board);
-
-    app.insert_resource(MenuMaterials {
-        root: Color::rgb(0.65, 0.65, 0.65),
-        border: Color::rgb(0.15, 0.15, 0.15),
-        menu: Color::rgb(0.15, 0.15, 0.15),
-        button: Color::rgb(0.25, 0.25, 0.25),
-        button_hovered: Color::rgb(0.25, 0.25, 0.25),
-        button_pressed: Color::rgb(0.35, 0.75, 0.35),
-        button_text: Color::WHITE,
-    });
 
     app.add_plugin(MainMenuPlugin);
 
@@ -145,5 +135,5 @@ fn setup_board(
         font: asset_server.load("fonts/pixeled.ttf"),
     });
     // Plugin activation
-    state.set(AppState::InProgress).unwrap();
+    // state.set(AppState::InProgress).unwrap();
 }
