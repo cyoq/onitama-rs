@@ -1,7 +1,8 @@
 use bevy::{log, prelude::*};
 
 use crate::{
-    components::card_index::CardIndex,
+    bounds::Bounds2,
+    components::{background::Background, card_index::CardIndex},
     resources::{
         app_state::AppState,
         board_assets::BoardAssets,
@@ -18,7 +19,8 @@ struct MainMenuData {
     title_root: Entity,
     description_root: Entity,
     player_list_root: Entity,
-    cards: Vec<Entity>,
+    // bounds are needed to color the background
+    cards: Vec<(Entity, Bounds2)>,
     button_root: Entity,
 }
 
@@ -33,10 +35,13 @@ impl Plugin for MainMenuPlugin {
         .add_system_set(
             SystemSet::on_update(AppState::MainMenu)
                 .with_system(button_system)
-                .with_system(list_system)
+                .with_system(color_selected_cards)
+                .with_system(reset_selected_cards)
                 .with_system(button_press_system),
         )
         .add_system_set(SystemSet::on_exit(AppState::MainMenu).with_system(cleanup));
+
+        app.add_event::<ResetSelectedCardsEvent>();
     }
 }
 
@@ -48,6 +53,51 @@ pub struct MenuMaterials {
     pub button_hovered: Color,
     pub button_pressed: Color,
     pub button_text: Color,
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectedCards(pub Vec<(Entity, u8)>);
+
+impl Default for SelectedCards {
+    fn default() -> Self {
+        Self(vec![])
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectedPlayers {
+    pub first_player: Option<PlayerType>,
+    pub second_player: Option<PlayerType>,
+}
+
+impl Default for SelectedPlayers {
+    fn default() -> Self {
+        Self {
+            first_player: None,
+            second_player: None,
+        }
+    }
+}
+
+struct CardColors(pub Vec<Color>);
+
+impl Default for CardColors {
+    fn default() -> Self {
+        Self(vec![
+            Color::RED,
+            Color::RED,
+            Color::LIME_GREEN,
+            Color::CYAN,
+            Color::CYAN,
+        ])
+    }
+}
+
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[derive(Debug, Clone, Component)]
+pub struct ListElement {
+    pub color: PlayerColor,
+    pub typ: PlayerType,
 }
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
@@ -70,28 +120,100 @@ fn button_system(
     }
 }
 
-fn list_system(
-    materials: Res<MenuMaterials>,
-    mut buttons: Query<(&Interaction, &mut UiColor), (Changed<Interaction>, With<ListElement>)>,
+fn color_selected_cards(
+    windows: Res<Windows>,
+    menu_data: Res<MainMenuData>,
+    mut colors: ResMut<CardColors>,
+    mut selected_cards: ResMut<SelectedCards>,
+    mouse_button_inputs: Res<Input<MouseButton>>,
+    cards_q: Query<(&CardIndex, &Children)>,
+    mut sprites: Query<&mut Sprite, With<Background>>,
 ) {
-    for (interaction, mut material) in buttons.iter_mut() {
-        match *interaction {
-            Interaction::Clicked => *material = materials.button_pressed.into(),
-            Interaction::Hovered => *material = materials.button_hovered.into(),
-            Interaction::None => *material = materials.button_normal.into(),
+    if !mouse_button_inputs.just_pressed(MouseButton::Left) {
+        return;
+    }
+
+    if colors.0.is_empty() {
+        log::info!("All cards are colored!");
+        return;
+    }
+
+    let window = windows.get_primary().unwrap();
+    let position = window.cursor_position();
+
+    for (entity, bounds) in menu_data.cards.iter() {
+        if let Some(pos) = position {
+            if !bounds.in_bounds_window(&window, pos) {
+                log::info!("No card selected!");
+                continue;
+            }
+
+            if let Ok((card_index, children)) = cards_q.get(*entity) {
+                'child: for child in children.iter() {
+                    match sprites.get_mut(*child) {
+                        Ok(mut sprite) => {
+                            let color = colors.0.remove(0);
+                            sprite.color = color;
+                            log::info!(
+                                "Selectd a card with index {} and given the color {:?}",
+                                card_index.0,
+                                color
+                            );
+
+                            selected_cards.0.push((*entity, card_index.0));
+                            break 'child;
+                        }
+                        Err(_) => log::warn!("Sprite for background was not found"),
+                    }
+                }
+            }
         }
+    }
+}
+
+struct ResetSelectedCardsEvent;
+
+fn reset_selected_cards(
+    mut colors: ResMut<CardColors>,
+    mut selected_cards: ResMut<SelectedCards>,
+    cards_q: Query<&Children, With<CardIndex>>,
+    mut sprites: Query<&mut Sprite, With<Background>>,
+    mut reset_selected_cards_rdr: EventReader<ResetSelectedCardsEvent>,
+) {
+    for _ in reset_selected_cards_rdr.iter() {
+        *colors = CardColors::default();
+        for (entity, _) in selected_cards.0.iter() {
+            if let Ok(children) = cards_q.get(*entity) {
+                'child: for child in children.iter() {
+                    match sprites.get_mut(*child) {
+                        Ok(mut sprite) => {
+                            sprite.color = Color::WHITE;
+                            break 'child;
+                        }
+                        Err(_) => log::warn!("Error while resetting card background!"),
+                    }
+                }
+            }
+        }
+        selected_cards.0.clear();
+        log::info!("Card colors after reset: {:?}", colors.0);
+        log::info!("Card colors after reset: {:?}", selected_cards);
     }
 }
 
 fn button_press_system(
     buttons: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
     mut state: ResMut<State<AppState>>,
+    mut reset_selected_cards_ewr: EventWriter<ResetSelectedCardsEvent>,
 ) {
     for (interaction, button) in buttons.iter() {
         if *interaction == Interaction::Clicked {
             match button {
                 ButtonAction::NewGame => log::info!("New Game"),
-                ButtonAction::ClearSelectedCards => log::info!("Clear selected"),
+                ButtonAction::ClearSelectedCards => {
+                    log::info!("Clear selected");
+                    reset_selected_cards_ewr.send(ResetSelectedCardsEvent);
+                }
                 // MenuButton::Play => state
                 //     .set(AppState::InProgress)
                 //     .expect("Couldn't switch state to InGame"),
@@ -282,7 +404,7 @@ fn setup_ui<T>(
         .id();
 
     // generating the cards
-    let mut cards: Vec<Entity> = Vec::with_capacity(CARDS.len());
+    let mut cards: Vec<(Entity, Bounds2)> = Vec::with_capacity(CARDS.len());
     let offset = window.width / 18.;
 
     log::info!("board size: {:?}", board_size);
@@ -320,7 +442,11 @@ fn setup_ui<T>(
                 );
             })
             .id();
-        cards.push(card_entity);
+        let bounds = Bounds2 {
+            position: position - board_size / 2.,
+            size: board_size,
+        };
+        cards.push((card_entity, bounds));
     }
 
     let button_root = commands
@@ -359,6 +485,10 @@ fn setup_ui<T>(
 
     commands.insert_resource(button_materials);
 
+    commands.insert_resource(SelectedCards::default());
+    commands.insert_resource(SelectedPlayers::default());
+    commands.insert_resource(CardColors::default());
+
     commands.insert_resource(MainMenuData {
         camera_entity,
         title_root,
@@ -367,12 +497,6 @@ fn setup_ui<T>(
         cards,
         button_root,
     });
-}
-
-#[derive(Debug, Clone, Component)]
-struct ListElement {
-    color: PlayerColor,
-    typ: PlayerType,
 }
 
 fn setup_single_list(
@@ -523,9 +647,12 @@ fn cleanup(mut commands: Commands, menu_data: Res<MainMenuData>) {
     commands.entity(menu_data.button_root).despawn_recursive();
     commands.entity(menu_data.camera_entity).despawn_recursive();
 
-    for entity in menu_data.cards.iter() {
+    for (entity, _) in menu_data.cards.iter() {
         commands.entity(*entity).despawn_recursive();
     }
 
     commands.remove_resource::<MainMenuData>();
+    commands.remove_resource::<SelectedCards>();
+    commands.remove_resource::<CardColors>();
+    commands.remove_resource::<SelectedPlayers>();
 }

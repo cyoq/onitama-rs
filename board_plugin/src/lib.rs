@@ -36,6 +36,7 @@ use crate::events::{
     MovePieceEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
     ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
+use crate::menu_plugin::ListElement;
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
@@ -689,6 +690,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
             registry.register::<CardBoard>();
             registry.register::<CardOwner>();
             registry.register::<Entity>();
+            registry.register::<ListElement>();
         }
     }
 }
