@@ -647,7 +647,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                     systems::game_state_process::next_turn_event
                         .label("next_turn_event")
                         .after("process_win_condition")
-                        .after("process_guide_text")
+                        .after("process_guide_text"),
                 )
                 .with_system(
                     systems::game_state_process::turn_process.before("process_win_condition"),
@@ -682,8 +682,12 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(systems::text_change::process_guide_text_change_timer)
                 .with_system(systems::board_input::color_selected_piece) // .with_system(systems::card_input::blink_non_selected_card),
                 .with_system(systems::board_input::reset_selected_piece_color)
-                .with_system(systems::board_input::generate_allowed_moves)
-                .with_system(systems::board_input::reset_allowed_moves)
+                .with_system(
+                    systems::board_input::reset_allowed_moves.before("generate_allowed_moves"),
+                )
+                .with_system(
+                    systems::board_input::generate_allowed_moves.label("generate_allowed_moves"),
+                )
                 .with_system(systems::board_input::move_piece::<T>)
                 .with_system(systems::card_input::card_swap)
                 .with_system(systems::card_input::mirror_card),

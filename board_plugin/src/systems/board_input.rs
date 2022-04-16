@@ -227,8 +227,6 @@ pub fn generate_allowed_moves(
         log::info!("Allowed moves: {:?}", allowed_moves);
 
         for (entity, coords, mut sprite) in tiles_q.iter_mut() {
-            // TODO: different color for enemy piece
-            // TODO: bug: when the same spot is colored, its color is resetted for the second time
             if allowed_moves.contains(coords) {
                 if let Ok(children) = children_q.get(entity) {
                     for child in children.iter() {
