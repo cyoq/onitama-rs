@@ -205,6 +205,8 @@ pub fn generate_allowed_moves(
     game_state: Res<GameState>,
     selected_card: Res<SelectedCard>,
     mut tiles_q: Query<(Entity, &Coordinates, &mut Sprite), With<BoardTile>>,
+    children_q: Query<&Children, With<BoardTile>>,
+    mut visibility_q: Query<&mut Visibility>,
     mut generate_allowed_moves_rdr: EventReader<GenerateAllowedMovesEvent>,
 ) {
     for event in generate_allowed_moves_rdr.iter() {
@@ -228,6 +230,13 @@ pub fn generate_allowed_moves(
             // TODO: different color for enemy piece
             // TODO: bug: when the same spot is colored, its color is resetted for the second time
             if allowed_moves.contains(coords) {
+                if let Ok(children) = children_q.get(entity) {
+                    for child in children.iter() {
+                        if let Ok(mut visibility) = visibility_q.get_mut(*child) {
+                            visibility.is_visible = false;
+                        }
+                    }
+                }
                 sprite.color = Color::TOMATO;
                 commands.entity(entity).insert(AllowedMove);
             }
@@ -239,10 +248,19 @@ pub fn reset_allowed_moves(
     mut commands: Commands,
     board_assets: Res<BoardAssets>,
     mut tiles_q: Query<(Entity, &mut Sprite), With<AllowedMove>>,
+    children_q: Query<&Children, With<BoardTile>>,
+    mut visibility_q: Query<&mut Visibility>,
     mut reset_allowed_moves_event: EventReader<ResetAllowedMovesEvent>,
 ) {
     for _ in reset_allowed_moves_event.iter() {
         for (entity, mut sprite) in tiles_q.iter_mut() {
+            if let Ok(children) = children_q.get(entity) {
+                for child in children.iter() {
+                    if let Ok(mut visibility) = visibility_q.get_mut(*child) {
+                        visibility.is_visible = true;
+                    }
+                }
+            }
             sprite.color = board_assets.tile_material.color;
             commands.entity(entity).remove::<AllowedMove>();
         }
