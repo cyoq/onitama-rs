@@ -13,7 +13,6 @@ pub struct Evaluation;
 impl Evaluation {
     pub fn evaluate(
         board: &Board,
-        depth: u8,
         curr_color: &PlayerColor,
         move_result: Option<&MoveResult>,
     ) -> i32 {
@@ -73,7 +72,7 @@ impl Evaluation {
             for (x, tile) in line.iter().enumerate() {
                 if let Some(piece) = tile.piece {
                     let piece_score = match piece.kind {
-                        PieceKind::Pawn => 1,
+                        PieceKind::Pawn => 10,
                         PieceKind::King => 100,
                     };
 
@@ -106,10 +105,9 @@ impl Evaluation {
                 }
             }
         }
-        sign * (10 * (my_piece_score_sum - enemy_piece_score_sum)
-            - 2 * (my_temple_distance - enemy_temple_distance)
-            - 5 * (my_close_enemies - enemy_close_enemies)
-            - 5 * depth as i32)
+        sign * ((my_piece_score_sum - enemy_piece_score_sum)
+            - (my_temple_distance - enemy_temple_distance)
+            + (my_close_enemies - enemy_close_enemies))
     }
 
     fn manhattan_distance(from: Coordinates, to: Coordinates) -> i32 {

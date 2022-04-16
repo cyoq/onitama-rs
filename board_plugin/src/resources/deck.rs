@@ -23,43 +23,43 @@ pub struct Deck {
 
 impl Deck {
     #[inline]
-    pub fn get_player_cards(&self, game_state: &GameState) -> [(Entity, &Card); 2] {
+    pub fn get_player_cards(&self, game_state: &GameState) -> [(Entity, Card); 2] {
         if game_state.curr_color == PlayerColor::Blue {
             return [
                 (
                     self.cards[BLUE_PLAYER_FIRST_CARD],
-                    &self
+                    self
                         .cardboards
                         .get(&self.cards[BLUE_PLAYER_FIRST_CARD])
                         .unwrap()
-                        .card,
+                        .card.clone(),
                 ),
                 (
                     self.cards[BLUE_PLAYER_SECOND_CARD],
-                    &self
+                    self
                         .cardboards
                         .get(&self.cards[BLUE_PLAYER_SECOND_CARD])
                         .unwrap()
-                        .card,
+                        .card.clone(),
                 ),
             ];
         }
         [
             (
                 self.cards[RED_PLAYER_FIRST_CARD],
-                &self
+                self
                     .cardboards
                     .get(&self.cards[RED_PLAYER_FIRST_CARD])
                     .unwrap()
-                    .card,
+                    .card.clone(),
             ),
             (
                 self.cards[RED_PLAYER_SECOND_CARD],
-                &self
+                self
                     .cardboards
                     .get(&self.cards[RED_PLAYER_SECOND_CARD])
                     .unwrap()
-                    .card,
+                    .card.clone(),
             ),
         ]
     }

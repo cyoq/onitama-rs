@@ -70,7 +70,7 @@ fn setup_board(
     };
 
     let second_player = Player {
-        agent: Box::new(AlphaBetaAgent { max_depth: 10 }),
+        agent: Box::new(AlphaBetaAgent { max_depth: 6 }),
         player_type: PlayerType::AlphaBeta,
     };
 

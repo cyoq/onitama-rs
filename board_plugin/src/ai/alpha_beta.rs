@@ -1,5 +1,4 @@
 use bevy::{log, prelude::Entity};
-use rand::{thread_rng, Rng};
 
 use crate::resources::{
     board::Board,
@@ -40,131 +39,85 @@ impl AlphaBetaAgent {
         let player_color = game_state.curr_color;
 
         if depth == self.max_depth || move_result == Some(&MoveResult::Win) {
-            // log::info!("Evaluation: {:?} for color {:?}",
-            //     Evaluation::evaluate(&board, depth, &player_color, move_result), player_color);
             return (
                 None,
-                Evaluation::evaluate(&board, depth, &player_color, move_result),
+                Evaluation::evaluate(&board, &player_color, move_result),
             );
         }
-
-        let card_idx: usize = if player_color == PlayerColor::Red {
-            thread_rng().gen_range(3..5)
-        } else {
-            thread_rng().gen_range(0..2)
-        };
-
-        let card = &deck.cardboards.get(&deck.cards[card_idx]).unwrap().card;
-
-        let possible_moves = board
-            .tile_map
-            .generate_possible_moves_for_card(&player_color, &card);
+        let cards = deck.get_player_cards(&game_state);
 
         let mut best_score;
-        let mut best_move = if possible_moves.is_empty() {
-            None
-        } else {
-            Some(possible_moves[0])
-        };
-
         if player_color == PlayerColor::Red {
             best_score = std::i32::MIN;
         } else {
             best_score = std::i32::MAX;
         }
 
-        'br: for mov in possible_moves.iter() {
-            let possible_piece_lose =
-                board.tile_map.map[mov.to.y as usize][mov.to.x as usize].clone();
+        let mut best_move = None;
 
-            let result = board.tile_map.make_a_move(mov.from, mov.to);
+        for ent_card in cards.into_iter() {
+            let card = ent_card.1;
+            let card_idx = deck.cards.iter().position(|e| *e == ent_card.0).unwrap();
 
-            game_state.next_turn();
-            deck.swap_card_with_neutral(card_idx);
-
-            // go deeper the tree
-            let (_, score) = self.alpha_beta(
-                depth + 1,
-                alpha,
-                beta,
-                board,
-                game_state,
-                deck,
-                Some(&result),
-                positions,
-            );
-
-            // Undo all made moves
-            board
+            let possible_moves = board
                 .tile_map
-                .undo_move(mov.to, mov.from, &result, possible_piece_lose);
-            game_state.undo_next_turn();
-            deck.swap_card_with_neutral(card_idx);
+                .generate_possible_moves_for_card(&player_color, &card);
 
-            if player_color == PlayerColor::Red {
-                if score > best_score {
-                    best_score = score;
-                    best_move = Some(*mov);
+            'br: for mov in possible_moves.iter() {
+                let possible_piece_lose =
+                    board.tile_map.map[mov.to.y as usize][mov.to.x as usize].clone();
+
+                let result = board.tile_map.make_a_move(mov.from, mov.to);
+
+                game_state.next_turn();
+                deck.swap_card_with_neutral(card_idx);
+
+                // go deeper the tree
+                let (_, score) = self.alpha_beta(
+                    depth + 1,
+                    alpha,
+                    beta,
+                    board,
+                    game_state,
+                    deck,
+                    Some(&result),
+                    positions,
+                );
+
+                // Undo all made moves
+                board
+                    .tile_map
+                    .undo_move(mov.to, mov.from, &result, possible_piece_lose);
+                game_state.undo_next_turn();
+                deck.swap_card_with_neutral(card_idx);
+
+                if player_color == PlayerColor::Red {
+                    if score > best_score {
+                        best_score = score;
+                        best_move = Some(*mov);
+                    }
+
+                    if score >= beta {
+                        break 'br;
+                    }
+
+                    alpha = std::cmp::max(alpha, score);
+                } else {
+                    if score < best_score {
+                        best_score = score;
+                        best_move = Some(*mov);
+                    }
+
+                    if score <= alpha {
+                        break 'br;
+                    }
+
+                    beta = std::cmp::min(beta, score);
                 }
-
-                if score >= beta {
-                    break 'br;
-                }
-
-                alpha = std::cmp::max(alpha, score);
-            } else {
-                if score < best_score {
-                    best_score = score;
-                    best_move = Some(*mov);
-                }
-
-                if score <= alpha {
-                    break 'br;
-                }
-
-                beta = std::cmp::min(beta, score);
             }
         }
 
         (best_move, best_score)
-    }
-
-    pub fn generate_move(
-        &self,
-        handle_amount: usize,
-        board: &Board,
-        game_state: &GameState,
-        deck: &Deck,
-    ) -> Vec<(Option<Move>, i32)> {
-        
-        let mut handles = Vec::with_capacity(handle_amount);
-
-        for _ in 0..handle_amount {
-            let mut positions = 0;
-            
-            let clone = self.clone();
-            let mut board = board.clone();
-            let mut game_state = game_state.clone();
-            let mut deck = deck.clone();
-
-            let handle = std::thread::spawn(move || {
-                clone.alpha_beta(
-                    0,
-                    std::i32::MIN,
-                    std::i32::MAX,
-                    &mut board,
-                    &mut game_state,
-                    &mut deck,
-                    None,
-                    &mut positions,
-                )
-            });
-
-            log::info!("Analyzed over {:?} positions", positions);
-
-            handles.push(handle.join().unwrap());
-        }
-        handles
     }
 }
 
@@ -172,35 +125,19 @@ impl Agent for AlphaBetaAgent {
     fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move) {
         let cards = deck.get_player_cards(game_state);
 
-        // let mut positions = 0;
+        let mut positions = 0;
 
-        // let result = self.alpha_beta(
-        //     0,
-        //     std::i32::MIN,
-        //     std::i32::MAX,
-        //     &mut board.clone(),
-        //     &mut game_state.clone(),
-        //     &mut deck.clone(),
-        //     None,
-        //     &mut positions,
-        // );
+        let result = self.alpha_beta(
+            0,
+            std::i32::MIN,
+            std::i32::MAX,
+            &mut board.clone(),
+            &mut game_state.clone(),
+            &mut deck.clone(),
+            None,
+            &mut positions,
+        );
 
-        let results = self.generate_move(4, board, game_state, deck);
-
-        let result;
-        if game_state.curr_color == PlayerColor::Red {
-           result = results.iter().max_by_key(|k| k.1).unwrap();
-        } else {
-           result = results.iter().min_by_key(|k| k.1).unwrap();
-        }
-
-        // let result = if res1.1 > res2.1 {
-        //     res1
-        // } else {
-        //     res2
-        // };
-
-        log::info!("Got res1: {:?}", results);
         log::info!("Evaluation score: {:?}", result.1);
         // log::info!("Analyzed over {:?} positions", positions);
 
