@@ -16,14 +16,14 @@ const RED_PLAYER_FIRST_CARD: usize = 3;
 const RED_PLAYER_SECOND_CARD: usize = 4;
 
 #[derive(Debug, Clone)]
-pub struct Deck<'a> {
-    pub cardboards: HashMap<Entity, CardBoard<'a>>,
+pub struct Deck {
+    pub cardboards: HashMap<Entity, CardBoard>,
     pub cards: Vec<Entity>,
 }
 
-impl<'a> Deck<'a> {
+impl Deck {
     #[inline]
-    pub fn get_player_cards(&self, game_state: &GameState) -> [(Entity, &Card<'a>); 2] {
+    pub fn get_player_cards(&self, game_state: &GameState) -> [(Entity, &Card); 2] {
         if game_state.curr_color == PlayerColor::Blue {
             return [
                 (

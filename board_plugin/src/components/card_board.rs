@@ -26,13 +26,13 @@ impl CardOwner {
 
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Clone, Component)]
-pub struct CardBoard<'a> {
+pub struct CardBoard {
     #[cfg_attr(feature = "debug", inspectable(ignore))]
-    pub card: Card<'a>,
+    pub card: Card,
     pub bounds: Bounds2,
 }
 
-impl<'a> CardBoard<'a> {
+impl CardBoard {
     pub fn in_bounds(&self, window: &Window, position: Vec2) -> bool {
         // Window to world space
         let window_size = Vec2::new(window.width(), window.height());

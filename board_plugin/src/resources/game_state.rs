@@ -33,21 +33,21 @@ pub enum PlayerType {
 }
 
 #[derive(Debug, Clone)]
-pub struct Player<'a> {
-    pub agent: &'a dyn Agent,
+pub struct Player {
+    pub agent: Box<dyn Agent>,
     pub player_type: PlayerType,
 }
 
 #[derive(Debug, Clone)]
-pub struct GameState<'a> {
-    pub players: [Player<'a>; 2],
+pub struct GameState {
+    pub players: [Player; 2],
     pub turn: u16,
     pub current_player_idx: usize,
     pub curr_color: PlayerColor,
 }
 
-impl<'a> GameState<'a> {
-    pub fn new(first_player: Player<'a>, second_player: Player<'a>) -> Self {
+impl GameState {
+    pub fn new(first_player: Player, second_player: Player) -> Self {
         Self {
             players: [first_player, second_player],
             turn: 0,

@@ -5,15 +5,15 @@ pub enum Edition {
 }
 
 #[derive(Debug, Clone)]
-pub struct Card<'a> {
+pub struct Card {
     pub edition: Edition,
-    pub directions: &'a [(i8, i8)],
+    pub directions: &'static [(i8, i8)],
     pub name: &'static str,
     pub is_mirrored: bool
 }
 
-impl<'a> Card<'a> {
-    const fn new(edition: Edition, directions: &'a [(i8, i8)], name: &'static str) -> Self {
+impl Card {
+    const fn new(edition: Edition, directions: &'static [(i8, i8)], name: &'static str) -> Self {
         Self {
             edition,
             directions,

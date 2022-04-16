@@ -26,28 +26,43 @@ impl Evaluation {
 
         if let Some(move_result) = move_result {
             if *move_result == MoveResult::Win {
-                return sign * 1000;
+                return sign * 10000;
             }
         }
 
-        let mut piece_score_sum = 0;
-        let mut temple_distance = 0;
-        let mut close_enemies = 0;
+        let mut my_piece_score_sum = 0;
+        let mut enemy_piece_score_sum = 0;
+        let mut enemy_temple_distance = 0;
+        let mut my_temple_distance = 0;
+        let mut enemy_close_enemies = 0;
+        let mut my_close_enemies = 0;
 
         let (enemy_temple, my_temple) = match curr_color {
             PlayerColor::Red => (BLUE_TEMPLE, RED_TEMPLE),
             PlayerColor::Blue => (RED_TEMPLE, BLUE_TEMPLE),
         };
 
-        let mut king_coords = my_temple;
+        let mut my_king_coords = my_temple;
+        let mut enemy_king_coords = enemy_temple;
+        let mut king_amount = 0;
+
         for (y, line) in board.tile_map.map.iter().enumerate() {
             for (x, tile) in line.iter().enumerate() {
                 if let Some(piece) = tile.piece {
                     if piece.kind == PieceKind::King && piece.color == curr_color {
-                        king_coords = Coordinates {
+                        my_king_coords = Coordinates {
                             x: x as u8,
                             y: y as u8,
                         };
+                        king_amount += 1;
+                    } else if piece.kind == PieceKind::King && piece.color != curr_color {
+                        enemy_king_coords = Coordinates {
+                            x: x as u8,
+                            y: y as u8,
+                        };
+                        king_amount += 1;
+                    }
+                    if king_amount == 2 {
                         break;
                     }
                 }
@@ -63,25 +78,38 @@ impl Evaluation {
                     };
 
                     if piece.color == curr_color {
-                        piece_score_sum += piece_score;
-                    }
+                        my_piece_score_sum += piece_score;
 
-                    // how king is far from temple
-                    if piece.kind == PieceKind::King && piece.color == curr_color {
-                        temple_distance = Self::manhattan_distance(king_coords, enemy_temple);
-                    }
-
-                    if piece.color != curr_color {
+                        // how close are the enemies to the king
                         let coords = Coordinates {
                             x: x as u8,
                             y: y as u8,
                         };
-                        close_enemies += Self::manhattan_distance(coords, king_coords);
+                        enemy_close_enemies += Self::manhattan_distance(coords, enemy_king_coords);
+                    } else {
+                        enemy_piece_score_sum += piece_score;
+
+                        let coords = Coordinates {
+                            x: x as u8,
+                            y: y as u8,
+                        };
+                        my_close_enemies += Self::manhattan_distance(coords, my_king_coords);
+                    }
+
+                    // how king is far from temple
+                    if piece.kind == PieceKind::King && piece.color == curr_color {
+                        enemy_temple_distance =
+                            Self::manhattan_distance(my_king_coords, enemy_temple);
+                    } else if piece.kind == PieceKind::King && piece.color != curr_color {
+                        my_temple_distance = Self::manhattan_distance(enemy_king_coords, my_temple);
                     }
                 }
             }
         }
-        sign * (10 * piece_score_sum - 2 * temple_distance - 5 * close_enemies - 5 * depth as i32)
+        sign * (10 * (my_piece_score_sum - enemy_piece_score_sum)
+            - 2 * (my_temple_distance - enemy_temple_distance)
+            - 5 * (my_close_enemies - enemy_close_enemies)
+            - 5 * depth as i32)
     }
 
     fn manhattan_distance(from: Coordinates, to: Coordinates) -> i32 {

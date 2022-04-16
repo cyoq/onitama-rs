@@ -22,7 +22,7 @@ use bevy::log;
 use bevy::prelude::*;
 
 pub fn input_handling(
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     windows: Res<Windows>,
     board: Res<Board>,
     mut button_evr: EventReader<MouseButtonInput>,
@@ -60,7 +60,7 @@ pub fn input_handling(
 
 pub fn process_selected_tile(
     mut commands: Commands,
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     selected_card: Res<SelectedCard>,
     mut selected_piece: ResMut<SelectedPiece>,
     pieces_parents_q: Query<(Entity, &Coordinates), With<Piece>>,
@@ -201,8 +201,8 @@ pub fn reset_selected_piece_color(
 pub fn generate_allowed_moves(
     mut commands: Commands,
     board: Res<Board>,
-    deck: Res<Deck<'static>>,
-    game_state: Res<GameState<'static>>,
+    deck: Res<Deck>,
+    game_state: Res<GameState>,
     selected_card: Res<SelectedCard>,
     mut tiles_q: Query<(Entity, &Coordinates, &mut Sprite), With<BoardTile>>,
     mut generate_allowed_moves_rdr: EventReader<GenerateAllowedMovesEvent>,

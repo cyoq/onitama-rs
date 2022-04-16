@@ -40,7 +40,7 @@ impl AlphaBetaAgent {
         let player_color = game_state.curr_color;
 
         if depth == self.max_depth || move_result == Some(&MoveResult::Win) {
-            // log::info!("Evaluation: {:?} for color {:?}", 
+            // log::info!("Evaluation: {:?} for color {:?}",
             //     Evaluation::evaluate(&board, depth, &player_color, move_result), player_color);
             return (
                 None,
@@ -128,6 +128,35 @@ impl AlphaBetaAgent {
 
         (best_move, best_score)
     }
+
+    pub fn generate_move(
+        &self,
+        board: &Board,
+        game_state: &GameState,
+        deck: &Deck,
+    ) -> (Option<Move>, i32) {
+        let mut positions = 0;
+        
+        let clone = self.clone();
+        let mut board = board.clone();
+        let mut game_state = game_state.clone();
+        let mut deck = deck.clone();
+
+        let handle = std::thread::spawn(move || {
+            clone.alpha_beta(
+                0,
+                std::i32::MIN,
+                std::i32::MAX,
+                &mut board,
+                &mut game_state,
+                &mut deck,
+                None,
+                &mut positions,
+            )
+        });
+
+        handle.join().unwrap()
+    }
 }
 
 impl Agent for AlphaBetaAgent {
@@ -136,7 +165,7 @@ impl Agent for AlphaBetaAgent {
 
         let mut positions = 0;
 
-        let result = self.alpha_beta(
+        let res1 = self.alpha_beta(
             0,
             std::i32::MIN,
             std::i32::MAX,
@@ -146,6 +175,16 @@ impl Agent for AlphaBetaAgent {
             None,
             &mut positions,
         );
+
+        let res2 = self.generate_move(board, game_state, deck);
+
+        let result = if res1.1 > res2.1 {
+            res1
+        } else {
+            res2
+        };
+
+        log::info!("Got res1: {:?} and res2 {:?}", res1, res2);
         log::info!("Evaluation score: {:?}", result.1);
         log::info!("Analyzed over {:?} positions", positions);
 

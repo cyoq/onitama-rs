@@ -13,7 +13,7 @@ use crate::{
 };
 
 pub fn turn_process(
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     mut turn_process_rdr: EventReader<TurnProcessEvent>,
     mut bot_move_ewr: EventWriter<GenerateBotMoveEvent>,
 ) {
@@ -29,7 +29,7 @@ pub fn turn_process(
 }
 
 pub fn next_turn_event(
-    mut game_state: ResMut<GameState<'static>>,
+    mut game_state: ResMut<GameState>,
     mut next_turn_rdr: EventReader<NextTurnEvent>,
     mut turn_process_ewr: EventWriter<TurnProcessEvent>,
     mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
@@ -53,7 +53,7 @@ pub fn next_turn_event(
 
 pub fn process_win_condition(
     mut app_state: ResMut<State<AppState>>,
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     mut check_win_condition_rdr: EventReader<ProcessWinConditionEvent>,
     mut change_guide_text_ewr: EventWriter<ChangeGuideTextEvent>,
 ) {

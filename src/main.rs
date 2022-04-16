@@ -65,16 +65,16 @@ fn setup_board(
     });
 
     let first_player = Player {
-        agent: &Human,
+        agent: Box::new(Human),
         player_type: PlayerType::Human,
     };
 
     let second_player = Player {
-        agent: &AlphaBetaAgent { max_depth: 10 },
+        agent: Box::new(AlphaBetaAgent { max_depth: 10 }),
         player_type: PlayerType::AlphaBeta,
     };
 
-    commands.insert_resource(GameState::new(second_player, first_player));
+    commands.insert_resource(GameState::new(first_player, second_player));
 
     // Board assets
     commands.insert_resource(BoardAssets {

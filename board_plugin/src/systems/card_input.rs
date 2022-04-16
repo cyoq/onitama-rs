@@ -17,10 +17,10 @@ use bevy::prelude::*;
 
 pub fn card_selection_handling(
     board: Res<Board>,
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     mut selected_card: ResMut<SelectedCard>,
     mut selected_piece: ResMut<SelectedPiece>,
-    deck: Res<Deck<'static>>,
+    deck: Res<Deck>,
     windows: Res<Windows>,
     mouse_button_inputs: Res<Input<MouseButton>>,
     colors_q: Query<&CardOwner>,
@@ -158,7 +158,7 @@ pub fn blink_non_selected_card(
 }
 
 pub fn card_swap(
-    mut deck: ResMut<Deck<'static>>,
+    mut deck: ResMut<Deck>,
     mut transform_q: Query<(&mut Transform, &mut CardIndex, &mut CardOwner)>,
     mut card_swap_rdr: EventReader<CardSwapEvent>,
     mut mirror_card_ewr: EventWriter<MirrorCardEvent>,
@@ -248,7 +248,7 @@ pub fn card_swap(
 }
 
 pub fn mirror_card(
-    deck: Res<Deck<'static>>,
+    deck: Res<Deck>,
     board_assets: Res<BoardAssets>,
     tiles_q: Query<&Children, With<CardIndex>>,
     mut sprites_tiles_q: Query<

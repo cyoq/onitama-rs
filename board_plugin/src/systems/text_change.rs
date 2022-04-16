@@ -68,7 +68,7 @@ pub fn process_guide_text_change_timer(
 }
 
 pub fn change_turn_text(
-    game_state: Res<GameState<'static>>,
+    game_state: Res<GameState>,
     board_assets: Res<BoardAssets>,
     parents_q: Query<&Children, With<TurnText>>,
     mut text_q: Query<&mut Text>,

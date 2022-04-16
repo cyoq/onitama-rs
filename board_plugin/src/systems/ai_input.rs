@@ -14,8 +14,8 @@ use bevy::{log, prelude::*};
 
 pub fn generate_bot_move(
     board: Res<Board>,
-    game_state: Res<GameState<'static>>,
-    deck: Res<Deck<'static>>,
+    game_state: Res<GameState>,
+    deck: Res<Deck>,
     mut random_bot_move_rdr: EventReader<GenerateBotMoveEvent>,
     mut bot_make_move_ewr: EventWriter<BotMakeMoveEvent>,
 ) {
