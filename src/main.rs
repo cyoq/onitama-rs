@@ -3,14 +3,14 @@ use bevy::prelude::*;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 use board_plugin::button_plugin::ButtonPlugin;
-use board_plugin::menu_plugin::{MainMenuPlugin};
+use board_plugin::menu_plugin::MainMenuPlugin;
 use board_plugin::resources::app_state::AppState;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
-use board_plugin::BoardPlugin;
 use board_plugin::resources::physical_deck::PhysicalDeck;
 use board_plugin::resources::selected::SelectedPlayers;
+use board_plugin::BoardPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -107,8 +107,12 @@ fn setup_board(
             color: Color::OLIVE,
             ..Default::default()
         },
-        selected_card_material: SpriteMaterial {
-            color: Color::rgb_u8(255, 154, 154),
+        selected_blue_card_material: SpriteMaterial {
+            color: Color::CYAN,
+            ..Default::default()
+        },
+        selected_red_card_material: SpriteMaterial {
+            color: Color::RED,
             ..Default::default()
         },
         selected_piece_material: SpriteMaterial {

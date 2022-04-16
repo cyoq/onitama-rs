@@ -10,7 +10,7 @@ use crate::events::{
 use crate::resources::board::Board;
 use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::{Deck, NEUTRAL_CARD_IDX};
-use crate::resources::game_state::GameState;
+use crate::resources::game_state::{GameState, PlayerColor};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use bevy::log;
 use bevy::prelude::*;
@@ -100,6 +100,7 @@ pub fn card_selection_handling(
 }
 
 pub fn color_selected_card(
+    game_state: Res<GameState>,
     mut sprites: Query<&mut Sprite, With<Background>>,
     parents: Query<(Entity, &Children), With<CardIndex>>,
     mut color_selected_card_rdr: EventReader<ColorSelectedCardEvent>,
@@ -109,7 +110,12 @@ pub fn color_selected_card(
         if let Ok((_, children)) = parents.get(event.0) {
             for child in children.iter() {
                 if let Ok(mut sprite) = sprites.get_mut(*child) {
-                    sprite.color = board_assets.selected_card_material.color;
+                    let color = if game_state.curr_color == PlayerColor::Blue {
+                        board_assets.selected_blue_card_material.color
+                    } else {
+                        board_assets.selected_red_card_material.color
+                    };
+                    sprite.color = color;
                     break;
                 }
             }

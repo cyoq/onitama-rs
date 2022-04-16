@@ -40,7 +40,9 @@ pub struct BoardAssets {
     ///
     pub deck_card_allowed_move_material: SpriteMaterial,
     ///
-    pub selected_card_material: SpriteMaterial,
+    pub selected_red_card_material: SpriteMaterial,
+    ///
+    pub selected_blue_card_material: SpriteMaterial,
     ///
     pub selected_piece_material: SpriteMaterial,
     ///
