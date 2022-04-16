@@ -39,17 +39,16 @@ impl PhysicalDeck {
         for index in indices.iter() {
             self.cards.push(CARDS[*index as usize].clone());
         }
+
+        // Reversing because red should get the cards that are in the end of the array
+        self.cards.reverse();
     }
 
     pub fn take_some_random_cards(&mut self, indices: &Vec<u8>) {
         assert!(indices.len() <= 5);
         let mut rng = thread_rng();
 
-        for index in indices.iter() {
-            self.cards.push(CARDS[*index as usize].clone());
-        }
-
-        let mut indices: Vec<u8> = Vec::new();
+        let mut indices: Vec<u8> = indices.clone();
 
         while indices.len() != 5 - self.cards.len() {
             let index = rng.gen_range(0..CARDS.len());
@@ -63,5 +62,8 @@ impl PhysicalDeck {
         for index in indices.iter() {
             self.cards.push(CARDS[*index as usize].clone());
         }
+
+        // Reversing because red should get the cards that are in the end of the array
+        self.cards.reverse();
     }
 }

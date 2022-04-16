@@ -69,7 +69,6 @@ fn input_handler(
                             log::info!("Creating a new game after a game end!");
                             state.set(AppState::InProgress).unwrap();
                         }
-                        //TODO restart in any moment
                     }
                 }
             }
