@@ -644,12 +644,13 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("process_win_condition"),
                 )
                 .with_system(
-                    systems::game_state_process::turn_process.before("process_win_condition"),
-                )
-                .with_system(
                     systems::game_state_process::next_turn_event
                         .label("next_turn_event")
-                        .after("process_win_condition"),
+                        .after("process_win_condition")
+                        .after("process_guide_text")
+                )
+                .with_system(
+                    systems::game_state_process::turn_process.before("process_win_condition"),
                 )
                 .with_system(
                     systems::ai_input::generate_bot_move
