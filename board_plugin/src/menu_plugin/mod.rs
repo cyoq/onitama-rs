@@ -10,6 +10,8 @@ use crate::{
         card::CARDS,
         deck_options::DeckOptions,
         game_state::{PlayerColor, PlayerType},
+        physical_deck::PhysicalDeck,
+        selected::SelectedPlayers,
     },
     BoardPlugin,
 };
@@ -64,21 +66,6 @@ pub struct SelectedCards(pub Vec<(Entity, u8)>);
 impl Default for SelectedCards {
     fn default() -> Self {
         Self(vec![])
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SelectedPlayers {
-    pub red_player: PlayerType,
-    pub blue_player: PlayerType,
-}
-
-impl Default for SelectedPlayers {
-    fn default() -> Self {
-        Self {
-            red_player: PlayerType::Human,
-            blue_player: PlayerType::Human,
-        }
     }
 }
 
@@ -211,21 +198,31 @@ fn reset_selected_cards(
 
 fn button_press_system(
     buttons: Query<(&Interaction, &ButtonAction), (Changed<Interaction>, With<Button>)>,
+    mut physical_deck: ResMut<PhysicalDeck>,
+    selected_cards: Res<SelectedCards>,
     mut state: ResMut<State<AppState>>,
     mut reset_selected_cards_ewr: EventWriter<ResetSelectedCardsEvent>,
 ) {
     for (interaction, button) in buttons.iter() {
         if *interaction == Interaction::Clicked {
             match button {
-                ButtonAction::StartGame => log::info!("New Game"),
+                ButtonAction::StartGame => {
+                    log::info!("New Game");
+                    if selected_cards.0.len() == 5 {
+                        let res = selected_cards.0.iter().map(|v| v.1).collect::<Vec<_>>();
+                        physical_deck.take_cards_from_indices(&res);
+                    } else if selected_cards.0.len() == 0 {
+                        physical_deck.take_random_cards();
+                    } else {
+                        let res = selected_cards.0.iter().map(|v| v.1).collect::<Vec<_>>();
+                        physical_deck.take_some_random_cards(&res);
+                    }
+                    state.set(AppState::InProgress).unwrap();
+                },
                 ButtonAction::ClearSelectedCards => {
                     log::info!("Clear selected");
                     reset_selected_cards_ewr.send(ResetSelectedCardsEvent);
                 }
-                // MenuButton::Play => state
-                //     .set(AppState::InProgress)
-                //     .expect("Couldn't switch state to InGame"),
-                // MenuButton::Quit => (),
             };
         }
     }
@@ -244,19 +241,15 @@ fn update_button_color(
             match list_element.color {
                 PlayerColor::Red => {
                     if selected_players.red_player == list_element.typ {
-                        log::info!("Updated list to red: {:?}", list_element);
                         *material = Color::RED.into();
                     } else {
-                        log::info!("Updated list: {:?}", list_element);
                         *material = materials.button_normal.into()
                     }
                 }
                 PlayerColor::Blue => {
                     if selected_players.blue_player == list_element.typ {
-                        log::info!("Updated list to blue: {:?}", list_element);
                         *material = Color::BLUE.into();
                     } else {
-                        log::info!("Updated list: {:?}", list_element);
                         *material = materials.button_normal.into()
                     }
                 }
@@ -320,7 +313,9 @@ fn setup_ui<T>(
     window: Res<WindowDescriptor>,
     board_assets: Res<BoardAssets>,
     board_options: Res<BoardOptions>,
+    mut physical_deck: ResMut<PhysicalDeck>,
 ) {
+    physical_deck.clear();
     let camera_entity = commands.spawn_bundle(UiCameraBundle::default()).id();
 
     let button_materials = MenuMaterials {
@@ -576,7 +571,6 @@ fn setup_ui<T>(
     commands.insert_resource(button_materials);
 
     commands.insert_resource(SelectedCards::default());
-    commands.insert_resource(SelectedPlayers::default());
     commands.insert_resource(CardColors::default());
 
     commands.insert_resource(MainMenuData {
@@ -770,5 +764,4 @@ fn cleanup(mut commands: Commands, menu_data: Res<MainMenuData>) {
     commands.remove_resource::<MainMenuData>();
     commands.remove_resource::<SelectedCards>();
     commands.remove_resource::<CardColors>();
-    commands.remove_resource::<SelectedPlayers>();
 }

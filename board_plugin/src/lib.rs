@@ -1,11 +1,11 @@
 pub mod ai;
 pub mod bounds;
+pub mod button_plugin;
 pub mod components;
 pub mod events;
 pub mod menu_plugin;
 pub mod resources;
 pub mod systems;
-pub mod button_plugin;
 
 use bevy::ecs::schedule::StateData;
 use bevy::ecs::system::EntityCommands;
@@ -24,8 +24,14 @@ use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::card::Card;
 use resources::deck_options::DeckOptions;
-use resources::game_state::{PlayerColor, GameState};
+use resources::game_state::{GameState, PlayerColor};
+use resources::physical_deck::PhysicalDeck;
+use resources::selected::SelectedPlayers;
 
+use crate::ai::agent::Agent;
+use crate::ai::alpha_beta::AlphaBetaAgent;
+use crate::ai::human::Human;
+use crate::ai::random_agent::RandomAgent;
 use crate::bounds::Bounds2;
 use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
@@ -40,6 +46,7 @@ use crate::menu_plugin::ListElement;
 use crate::resources::board_options::TileSize;
 use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
+use crate::resources::game_state::{Player, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
 use crate::resources::text_handler::TextHandler;
 use crate::resources::tile_map::TileMap;
@@ -61,7 +68,9 @@ impl<T> BoardPlugin<T> {
         board_options: Option<Res<BoardOptions>>,
         deck_options: Option<Res<DeckOptions>>,
         window: Res<WindowDescriptor>,
+        selected_players: Res<SelectedPlayers>,
         board_assets: Res<BoardAssets>,
+        physical_deck: Res<PhysicalDeck>,
     ) {
         let options = match board_options {
             Some(opt) => opt.clone(),
@@ -157,13 +166,15 @@ impl<T> BoardPlugin<T> {
             Vec2::new(-deck_pos.x, -deck_pos.y),
         ];
 
-        let mut cards = [
-            CARDS[0].clone(),
-            CARDS[1].clone(),
-            CARDS[2].clone(),
-            CARDS[3].clone(),
-            CARDS[4].clone(),
-        ];
+        // let mut cards = [
+        //     CARDS[0].clone(),
+        //     CARDS[1].clone(),
+        //     CARDS[2].clone(),
+        //     CARDS[3].clone(),
+        //     CARDS[4].clone(),
+        // ];
+
+        let mut cards = physical_deck.cards.clone();
 
         cards[0].is_mirrored = true;
         cards[1].is_mirrored = true;
@@ -277,6 +288,30 @@ impl<T> BoardPlugin<T> {
             turn_text,
             guide_text,
         });
+
+        let red_agent: Box<dyn Agent> = match selected_players.red_player {
+            PlayerType::Human => Box::new(Human),
+            PlayerType::Random => Box::new(RandomAgent),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 5 }),
+        };
+
+        let blue_agent: Box<dyn Agent> = match selected_players.blue_player {
+            PlayerType::Human => Box::new(Human),
+            PlayerType::Random => Box::new(RandomAgent),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 5 }),
+        };
+
+        let red_player = Player {
+            agent: red_agent,
+            player_type: selected_players.red_player,
+        };
+
+        let blue_player = Player {
+            agent: blue_agent,
+            player_type: selected_players.blue_player,
+        };
+
+        commands.insert_resource(GameState::new(red_player, blue_player));
     }
 
     pub fn adaptive_tile_size(
@@ -570,7 +605,6 @@ impl<T> BoardPlugin<T> {
         board: Res<Board>,
         deck: Res<Deck>,
         text_handler: Res<TextHandler>,
-        mut game_state: ResMut<GameState>
     ) {
         commands.entity(board.entity).despawn_recursive();
         commands.remove_resource::<Board>();
@@ -587,7 +621,7 @@ impl<T> BoardPlugin<T> {
         commands.remove_resource::<SelectedPiece>();
         commands.remove_resource::<SelectedCard>();
 
-        game_state.clear();
+        commands.remove_resource::<GameState>();
     }
 }
 

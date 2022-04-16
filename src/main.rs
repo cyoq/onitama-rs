@@ -2,17 +2,15 @@ use bevy::prelude::*;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
-use board_plugin::ai::alpha_beta::AlphaBetaAgent;
-use board_plugin::ai::human::Human;
-use board_plugin::ai::random_agent::RandomAgent;
 use board_plugin::button_plugin::ButtonPlugin;
-use board_plugin::menu_plugin::{MainMenuPlugin, MenuMaterials};
+use board_plugin::menu_plugin::{MainMenuPlugin};
 use board_plugin::resources::app_state::AppState;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
-use board_plugin::resources::game_state::{GameState, Player, PlayerType};
 use board_plugin::BoardPlugin;
+use board_plugin::resources::physical_deck::PhysicalDeck;
+use board_plugin::resources::selected::SelectedPlayers;
 
 fn main() {
     let mut app = App::new();
@@ -25,14 +23,17 @@ fn main() {
     })
     .add_plugins(DefaultPlugins);
 
+    app.insert_resource(PhysicalDeck::new());
+    app.insert_resource(SelectedPlayers::default());
+
     app.add_state(AppState::MainMenu);
+    app.add_plugin(MainMenuPlugin);
+
     app.add_plugin(BoardPlugin {
         running_state: AppState::InProgress,
         cleanup_state: AppState::GameEnd,
     })
     .add_startup_system(setup_board);
-
-    app.add_plugin(MainMenuPlugin);
 
     app.add_plugin(ButtonPlugin);
 
@@ -70,18 +71,6 @@ fn setup_board(
             max: 30.0,
         },
     });
-
-    let first_player = Player {
-        agent: Box::new(Human),
-        player_type: PlayerType::Human,
-    };
-
-    let second_player = Player {
-        agent: Box::new(AlphaBetaAgent { max_depth: 5 }),
-        player_type: PlayerType::AlphaBeta,
-    };
-
-    commands.insert_resource(GameState::new(first_player, second_player));
 
     // Board assets
     commands.insert_resource(BoardAssets {

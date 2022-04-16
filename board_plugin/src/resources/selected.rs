@@ -2,6 +2,8 @@ use bevy::prelude::Entity;
 
 use crate::components::coordinates::Coordinates;
 
+use super::game_state::PlayerType;
+
 #[derive(Debug, Clone)]
 pub struct SelectedCard {
     pub entity: Option<Entity>,
@@ -31,6 +33,21 @@ impl Default for SelectedPiece {
         Self {
             entity: None,
             coordinates: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectedPlayers {
+    pub red_player: PlayerType,
+    pub blue_player: PlayerType,
+}
+
+impl Default for SelectedPlayers {
+    fn default() -> Self {
+        Self {
+            red_player: PlayerType::Human,
+            blue_player: PlayerType::Human,
         }
     }
 }

@@ -10,3 +10,4 @@ pub mod tile_map;
 pub mod game_state;
 pub mod app_state;
 pub mod text_handler;
+pub mod physical_deck;

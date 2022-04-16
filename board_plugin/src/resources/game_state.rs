@@ -48,9 +48,9 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(first_player: Player, second_player: Player) -> Self {
+    pub fn new(red_player: Player, blue_player: Player) -> Self {
         Self {
-            players: [first_player, second_player],
+            players: [red_player, blue_player],
             turn: 0,
             current_player_idx: 0,
             curr_color: PlayerColor::Red,
