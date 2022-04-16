@@ -37,11 +37,14 @@ impl Plugin for MainMenuPlugin {
                 .with_system(button_system)
                 .with_system(color_selected_cards)
                 .with_system(reset_selected_cards)
-                .with_system(button_press_system),
+                .with_system(button_press_system)
+                .with_system(list_press_system)
+                .with_system(update_button_color),
         )
         .add_system_set(SystemSet::on_exit(AppState::MainMenu).with_system(cleanup));
 
         app.add_event::<ResetSelectedCardsEvent>();
+        app.add_event::<UpdateButtonColorEvent>();
     }
 }
 
@@ -66,15 +69,15 @@ impl Default for SelectedCards {
 
 #[derive(Debug, Clone)]
 pub struct SelectedPlayers {
-    pub first_player: Option<PlayerType>,
-    pub second_player: Option<PlayerType>,
+    pub red_player: PlayerType,
+    pub blue_player: PlayerType,
 }
 
 impl Default for SelectedPlayers {
     fn default() -> Self {
         Self {
-            first_player: None,
-            second_player: None,
+            red_player: PlayerType::Human,
+            blue_player: PlayerType::Human,
         }
     }
 }
@@ -103,13 +106,19 @@ pub struct ListElement {
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
 enum ButtonAction {
-    NewGame,
+    StartGame,
     ClearSelectedCards,
 }
 
+#[derive(Component)]
+struct SimpleButton;
+
 fn button_system(
     materials: Res<MenuMaterials>,
-    mut buttons: Query<(&Interaction, &mut UiColor), (Changed<Interaction>, With<Button>)>,
+    mut buttons: Query<
+        (&Interaction, &mut UiColor),
+        (Changed<Interaction>, With<Button>, With<SimpleButton>),
+    >,
 ) {
     for (interaction, mut material) in buttons.iter_mut() {
         match *interaction {
@@ -144,7 +153,6 @@ fn color_selected_cards(
     for (entity, bounds) in menu_data.cards.iter() {
         if let Some(pos) = position {
             if !bounds.in_bounds_window(&window, pos) {
-                log::info!("No card selected!");
                 continue;
             }
 
@@ -209,7 +217,7 @@ fn button_press_system(
     for (interaction, button) in buttons.iter() {
         if *interaction == Interaction::Clicked {
             match button {
-                ButtonAction::NewGame => log::info!("New Game"),
+                ButtonAction::StartGame => log::info!("New Game"),
                 ButtonAction::ClearSelectedCards => {
                     log::info!("Clear selected");
                     reset_selected_cards_ewr.send(ResetSelectedCardsEvent);
@@ -219,6 +227,88 @@ fn button_press_system(
                 //     .expect("Couldn't switch state to InGame"),
                 // MenuButton::Quit => (),
             };
+        }
+    }
+}
+
+struct UpdateButtonColorEvent;
+
+fn update_button_color(
+    selected_players: Res<SelectedPlayers>,
+    materials: Res<MenuMaterials>,
+    mut buttons: Query<(&ListElement, &mut UiColor), With<Button>>,
+    mut update_button_color_rdr: EventReader<UpdateButtonColorEvent>,
+) {
+    for _ in update_button_color_rdr.iter() {
+        for (list_element, mut material) in buttons.iter_mut() {
+            match list_element.color {
+                PlayerColor::Red => {
+                    if selected_players.red_player == list_element.typ {
+                        log::info!("Updated list to red: {:?}", list_element);
+                        *material = Color::RED.into();
+                    } else {
+                        log::info!("Updated list: {:?}", list_element);
+                        *material = materials.button_normal.into()
+                    }
+                }
+                PlayerColor::Blue => {
+                    if selected_players.blue_player == list_element.typ {
+                        log::info!("Updated list to blue: {:?}", list_element);
+                        *material = Color::BLUE.into();
+                    } else {
+                        log::info!("Updated list: {:?}", list_element);
+                        *material = materials.button_normal.into()
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn list_press_system(
+    mut selected_players: ResMut<SelectedPlayers>,
+    materials: Res<MenuMaterials>,
+    mut buttons: Query<
+        (&Interaction, &ListElement, &mut UiColor),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut update_button_color_ewr: EventWriter<UpdateButtonColorEvent>,
+) {
+    for (interaction, list_element, mut material) in buttons.iter_mut() {
+        match interaction {
+            Interaction::Clicked => {
+                match list_element.color {
+                    PlayerColor::Red => {
+                        *material = Color::RED.into();
+                        selected_players.red_player = list_element.typ;
+                    }
+                    PlayerColor::Blue => {
+                        *material = Color::BLUE.into();
+                        selected_players.blue_player = list_element.typ;
+                    }
+                }
+                update_button_color_ewr.send(UpdateButtonColorEvent);
+                log::info!("Changed selected players: {:?}", selected_players);
+            }
+            Interaction::Hovered => {
+                *material = materials.button_hovered.into();
+            }
+            Interaction::None => match list_element.color {
+                PlayerColor::Red => {
+                    if selected_players.red_player == list_element.typ {
+                        *material = Color::RED.into();
+                    } else {
+                        *material = materials.button_normal.into()
+                    }
+                }
+                PlayerColor::Blue => {
+                    if selected_players.blue_player == list_element.typ {
+                        *material = Color::BLUE.into();
+                    } else {
+                        *material = materials.button_normal.into()
+                    }
+                }
+            },
         }
     }
 }
@@ -475,10 +565,10 @@ fn setup_ui<T>(
 
             setup_single_button(
                 parent,
-                "NEW GAME",
+                "START A GAME",
                 button_materials.button_normal.into(),
                 font,
-                ButtonAction::NewGame,
+                ButtonAction::StartGame,
             );
         })
         .id();
@@ -561,11 +651,20 @@ fn setup_single_list(
         .with_children(|parent| {
             // List items
             for (text, player) in players {
+                let color = if player == PlayerType::Human {
+                    if player_color == PlayerColor::Red {
+                        Color::RED
+                    } else {
+                        Color::BLUE
+                    }
+                } else {
+                    Color::NONE
+                };
                 parent
-                    .spawn_bundle(TextBundle {
+                    .spawn_bundle(ButtonBundle {
                         style: Style {
                             flex_shrink: 0.,
-                            size: Size::new(Val::Undefined, Val::Px(20.)),
+                            size: Size::new(Val::Percent(50.), Val::Px(20.)),
                             margin: Rect {
                                 left: Val::Auto,
                                 right: Val::Auto,
@@ -573,22 +672,38 @@ fn setup_single_list(
                             },
                             ..Default::default()
                         },
-                        text: Text::with_section(
-                            format!("{}", text),
-                            TextStyle {
-                                font: font.clone(),
-                                font_size: 30.,
-                                color: Color::WHITE,
-                            },
-                            Default::default(),
-                        ),
+                        color: color.into(),
                         ..Default::default()
                     })
                     .insert(ListElement {
                         color: player_color,
                         typ: player,
+                    })
+                    .with_children(|parent| {
+                        parent.spawn_bundle(TextBundle {
+                            style: Style {
+                                flex_shrink: 0.,
+                                size: Size::new(Val::Undefined, Val::Px(20.)),
+                                margin: Rect {
+                                    left: Val::Auto,
+                                    right: Val::Auto,
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            },
+                            text: Text::with_section(
+                                format!("{}", text),
+                                TextStyle {
+                                    font: font.clone(),
+                                    font_size: 30.,
+                                    color: Color::WHITE,
+                                },
+                                Default::default(),
+                            ),
+                            ..Default::default()
+                        });
                     });
-            }
+            } // for cycle
         });
 }
 
@@ -613,6 +728,7 @@ fn setup_single_button(
             color,
             ..Default::default()
         })
+        .insert(SimpleButton)
         .insert(action)
         .insert(Name::new(text.to_string()))
         .with_children(|builder| {
