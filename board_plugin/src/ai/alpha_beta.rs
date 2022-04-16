@@ -131,31 +131,40 @@ impl AlphaBetaAgent {
 
     pub fn generate_move(
         &self,
+        handle_amount: usize,
         board: &Board,
         game_state: &GameState,
         deck: &Deck,
-    ) -> (Option<Move>, i32) {
-        let mut positions = 0;
+    ) -> Vec<(Option<Move>, i32)> {
         
-        let clone = self.clone();
-        let mut board = board.clone();
-        let mut game_state = game_state.clone();
-        let mut deck = deck.clone();
+        let mut handles = Vec::with_capacity(handle_amount);
 
-        let handle = std::thread::spawn(move || {
-            clone.alpha_beta(
-                0,
-                std::i32::MIN,
-                std::i32::MAX,
-                &mut board,
-                &mut game_state,
-                &mut deck,
-                None,
-                &mut positions,
-            )
-        });
+        for _ in 0..handle_amount {
+            let mut positions = 0;
+            
+            let clone = self.clone();
+            let mut board = board.clone();
+            let mut game_state = game_state.clone();
+            let mut deck = deck.clone();
 
-        handle.join().unwrap()
+            let handle = std::thread::spawn(move || {
+                clone.alpha_beta(
+                    0,
+                    std::i32::MIN,
+                    std::i32::MAX,
+                    &mut board,
+                    &mut game_state,
+                    &mut deck,
+                    None,
+                    &mut positions,
+                )
+            });
+
+            log::info!("Analyzed over {:?} positions", positions);
+
+            handles.push(handle.join().unwrap());
+        }
+        handles
     }
 }
 
@@ -163,30 +172,37 @@ impl Agent for AlphaBetaAgent {
     fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move) {
         let cards = deck.get_player_cards(game_state);
 
-        let mut positions = 0;
+        // let mut positions = 0;
 
-        let res1 = self.alpha_beta(
-            0,
-            std::i32::MIN,
-            std::i32::MAX,
-            &mut board.clone(),
-            &mut game_state.clone(),
-            &mut deck.clone(),
-            None,
-            &mut positions,
-        );
+        // let result = self.alpha_beta(
+        //     0,
+        //     std::i32::MIN,
+        //     std::i32::MAX,
+        //     &mut board.clone(),
+        //     &mut game_state.clone(),
+        //     &mut deck.clone(),
+        //     None,
+        //     &mut positions,
+        // );
 
-        let res2 = self.generate_move(board, game_state, deck);
+        let results = self.generate_move(4, board, game_state, deck);
 
-        let result = if res1.1 > res2.1 {
-            res1
+        let result;
+        if game_state.curr_color == PlayerColor::Red {
+           result = results.iter().max_by_key(|k| k.1).unwrap();
         } else {
-            res2
-        };
+           result = results.iter().min_by_key(|k| k.1).unwrap();
+        }
 
-        log::info!("Got res1: {:?} and res2 {:?}", res1, res2);
+        // let result = if res1.1 > res2.1 {
+        //     res1
+        // } else {
+        //     res2
+        // };
+
+        log::info!("Got res1: {:?}", results);
         log::info!("Evaluation score: {:?}", result.1);
-        log::info!("Analyzed over {:?} positions", positions);
+        // log::info!("Analyzed over {:?} positions", positions);
 
         (cards[0].0, result.0.unwrap())
     }
