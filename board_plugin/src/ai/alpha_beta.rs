@@ -44,6 +44,7 @@ impl AlphaBetaAgent {
                 Evaluation::evaluate(&board, &player_color, move_result),
             );
         }
+
         let cards = deck.get_player_cards(&game_state);
 
         let mut best_score;
@@ -139,7 +140,7 @@ impl Agent for AlphaBetaAgent {
         );
 
         log::info!("Evaluation score: {:?}", result.1);
-        // log::info!("Analyzed over {:?} positions", positions);
+        log::info!("Analyzed over {:?} positions", positions);
 
         (cards[0].0, result.0.unwrap())
     }

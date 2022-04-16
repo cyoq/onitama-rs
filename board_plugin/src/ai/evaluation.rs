@@ -18,14 +18,15 @@ impl Evaluation {
     ) -> i32 {
         let mut sign = 1;
 
-        let curr_color = curr_color.enemy();
+        // let curr_color = curr_color.enemy();
+        let curr_color = *curr_color;
         if curr_color == PlayerColor::Blue {
             sign = -1;
         }
 
         if let Some(move_result) = move_result {
             if *move_result == MoveResult::Win {
-                return sign * 10000;
+                return -sign * 10000;
             }
         }
 
@@ -73,7 +74,7 @@ impl Evaluation {
                 if let Some(piece) = tile.piece {
                     let piece_score = match piece.kind {
                         PieceKind::Pawn => 10,
-                        PieceKind::King => 100,
+                        PieceKind::King => 10000,
                     };
 
                     if piece.color == curr_color {
