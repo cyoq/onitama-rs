@@ -18,7 +18,6 @@ use components::board_tile::BoardTile;
 use components::coordinates::Coordinates;
 use components::pieces::{Piece, PieceKind};
 use events::TurnProcessEvent;
-use resources::app_state::AppState;
 use resources::board::Board;
 use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
@@ -292,13 +291,13 @@ impl<T> BoardPlugin<T> {
         let red_agent: Box<dyn Agent> = match selected_players.red_player {
             PlayerType::Human => Box::new(Human),
             PlayerType::Random => Box::new(RandomAgent),
-            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 5 }),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 7 }),
         };
 
         let blue_agent: Box<dyn Agent> = match selected_players.blue_player {
             PlayerType::Human => Box::new(Human),
             PlayerType::Random => Box::new(RandomAgent),
-            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 5 }),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 7 }),
         };
 
         let red_player = Player {

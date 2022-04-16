@@ -25,6 +25,11 @@ pub fn generate_bot_move(
             .agent
             .generate_move(&board, &game_state, &deck);
 
+        log::info!(
+            "Bot move is {:?} and used card is {:?}",
+            mov,
+            deck.cardboards.get(&card).unwrap().card.name
+        );
         bot_make_move_ewr.send(BotMakeMoveEvent {
             mov: mov,
             card_used: card,

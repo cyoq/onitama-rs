@@ -2,6 +2,7 @@ use bevy::{log, prelude::Entity};
 
 use crate::resources::{
     board::Board,
+    card::Card,
     deck::Deck,
     game_state::{GameState, PlayerColor},
     tile_map::{Move, MoveResult},
@@ -19,6 +20,12 @@ pub struct AlphaBetaAgent {
     pub max_depth: u8,
 }
 
+struct CalculationResult {
+    best_move: Option<Move>,
+    best_card: Option<Entity>,
+    best_score: i32,
+}
+
 impl AlphaBetaAgent {
     pub fn new(max_depth: u8) -> Self {
         Self { max_depth }
@@ -34,15 +41,16 @@ impl AlphaBetaAgent {
         deck: &mut Deck,
         move_result: Option<MoveResult>,
         positions: &mut i32,
-    ) -> (Option<Move>, i32) {
+    ) -> CalculationResult {
         *positions += 1;
         let player_color = game_state.curr_color;
 
         if depth == self.max_depth || move_result == Some(MoveResult::Win) {
-            return (
-                None,
-                Evaluation::evaluate(&board, &player_color, &move_result),
-            );
+            return CalculationResult {
+                best_move: None,
+                best_card: None,
+                best_score: Evaluation::evaluate(&board, &player_color, &move_result),
+            };
         }
 
         let cards = deck.get_player_cards(&game_state);
@@ -55,10 +63,10 @@ impl AlphaBetaAgent {
         }
 
         let mut best_move = None;
+        let mut best_card = None;
 
-        for ent_card in cards.into_iter() {
-            let card = ent_card.1;
-            let card_idx = deck.cards.iter().position(|e| *e == ent_card.0).unwrap();
+        for (entity, card) in cards.into_iter() {
+            let card_idx = deck.cards.iter().position(|e| *e == entity).unwrap();
 
             let possible_moves = board
                 .tile_map
@@ -74,7 +82,7 @@ impl AlphaBetaAgent {
                 deck.swap_card_with_neutral(card_idx);
 
                 // go deeper the tree
-                let (_, score) = self.alpha_beta(
+                let calc_result = self.alpha_beta(
                     depth + 1,
                     alpha,
                     beta,
@@ -84,6 +92,8 @@ impl AlphaBetaAgent {
                     Some(result),
                     positions,
                 );
+
+                let score = calc_result.best_score;
 
                 // Undo all made moves
                 board
@@ -96,6 +106,7 @@ impl AlphaBetaAgent {
                     if score > best_score {
                         best_score = score;
                         best_move = Some(*mov);
+                        best_card = Some(entity);
                     }
 
                     if score >= beta {
@@ -107,6 +118,7 @@ impl AlphaBetaAgent {
                     if score < best_score {
                         best_score = score;
                         best_move = Some(*mov);
+                        best_card = Some(entity);
                     }
 
                     if score <= alpha {
@@ -122,14 +134,16 @@ impl AlphaBetaAgent {
             }
         }
 
-        (best_move, best_score)
+        CalculationResult {
+            best_move,
+            best_card,
+            best_score,
+        }
     }
 }
 
 impl Agent for AlphaBetaAgent {
     fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move) {
-        let cards = deck.get_player_cards(game_state);
-
         let mut positions = 0;
 
         let result = self.alpha_beta(
@@ -143,10 +157,10 @@ impl Agent for AlphaBetaAgent {
             &mut positions,
         );
 
-        log::info!("Evaluation score: {:?}", result.1);
+        log::info!("Evaluation score: {:?}", result.best_score);
         log::info!("Analyzed over {:?} positions", positions);
 
-        (cards[0].0, result.0.unwrap())
+        (result.best_card.unwrap(), result.best_move.unwrap())
     }
 
     fn clone_dyn(&self) -> Box<dyn Agent> {
