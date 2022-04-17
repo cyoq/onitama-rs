@@ -88,16 +88,16 @@ fn setup_board(
             ..Default::default()
         },
         blue_king_material: SpriteMaterial {
-            texture: asset_server.load("sprites/star.png"),
-            color: Color::BLUE,
+            texture: asset_server.load("sprites/star_blue.png"),
+            ..Default::default()
         },
         red_pawn_material: SpriteMaterial {
             color: Color::RED,
             ..Default::default()
         },
         red_king_material: SpriteMaterial {
-            texture: asset_server.load("sprites/star.png"),
-            color: Color::RED,
+            texture: asset_server.load("sprites/star_red.png"),
+            ..Default::default()
         },
         deck_card_center_material: SpriteMaterial {
             color: Color::WHITE,
