@@ -28,7 +28,7 @@ use resources::game_state::{GameState, PlayerColor};
 use resources::physical_deck::PhysicalDeck;
 use resources::selected::SelectedPlayers;
 use resources::tile::TempleTile;
-use resources::tile_map::{RED_TEMPLE, BLUE_TEMPLE};
+use resources::tile_map::{BLUE_TEMPLE, RED_TEMPLE};
 
 use crate::ai::agent::Agent;
 use crate::ai::alpha_beta::AlphaBetaAgent;
@@ -400,31 +400,30 @@ impl<T> BoardPlugin<T> {
                 }
 
                 let tile_color = match coordinates {
-                    RED_TEMPLE | BLUE_TEMPLE => {
-                        board_assets.temple_tile_material.color
-                    }
+                    RED_TEMPLE | BLUE_TEMPLE => board_assets.temple_tile_material.color,
                     _ => board_assets.tile_material.color,
                 };
 
                 // Creating a tile on the board
                 let mut cmd = parent.spawn();
-                let tile_builder = cmd.insert_bundle(SpriteBundle {
-                    sprite: Sprite {
-                        color: tile_color,
-                        custom_size: Some(Vec2::splat(tile_size - padding)),
+                let tile_builder = cmd
+                    .insert_bundle(SpriteBundle {
+                        sprite: Sprite {
+                            color: tile_color,
+                            custom_size: Some(Vec2::splat(tile_size - padding)),
+                            ..Default::default()
+                        },
+                        transform: Transform::from_xyz(
+                            (x as f32 * tile_size) + (tile_size / 2.),
+                            (y as f32 * tile_size) + (tile_size / 2.),
+                            1.,
+                        ),
                         ..Default::default()
-                    },
-                    transform: Transform::from_xyz(
-                        (x as f32 * tile_size) + (tile_size / 2.),
-                        (y as f32 * tile_size) + (tile_size / 2.),
-                        1.,
-                    ),
-                    ..Default::default()
-                })
-                .insert(Name::new(format!("Tile ({}, {})", x, y)))
-                // We add the `Coordinates` component to our tile entity
-                .insert(coordinates)
-                .insert(BoardTile);
+                    })
+                    .insert(Name::new(format!("Tile ({}, {})", x, y)))
+                    // We add the `Coordinates` component to our tile entity
+                    .insert(coordinates)
+                    .insert(BoardTile);
 
                 if coordinates == RED_TEMPLE || coordinates == BLUE_TEMPLE {
                     tile_builder.insert(TempleTile);
@@ -695,7 +694,9 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .after("process_guide_text"),
                 )
                 .with_system(
-                    systems::game_state_process::turn_process.before("process_win_condition"),
+                    systems::game_state_process::turn_process
+                        .after("process_win_condition")
+                        .after("next_turn_event"),
                 )
                 .with_system(
                     systems::ai_input::generate_bot_move
@@ -734,7 +735,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                 .with_system(
                     systems::board_input::generate_allowed_moves.label("generate_allowed_moves"),
                 )
-                .with_system(systems::board_input::move_piece::<T>)
+                .with_system(systems::board_input::move_piece::<T>.after("next_turn_event"))
                 .with_system(systems::card_input::card_swap)
                 .with_system(systems::card_input::mirror_card),
         );
