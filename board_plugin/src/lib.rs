@@ -703,12 +703,12 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .label("bot_generate_move")
                         .after("next_turn_event"),
                 )
-                .with_system(systems::text_change::change_evaluation_text)
                 .with_system(
                     systems::ai_input::bot_make_move::<T>
                         .label("bot_make_move")
                         .after("bot_generate_move"),
                 )
+                .with_system(systems::text_change::change_evaluation_text)
                 .with_system(
                     systems::board_input::input_handling
                         .label("input_handling")

@@ -128,6 +128,6 @@ impl Evaluation {
     }
 
     fn manhattan_distance(from: Coordinates, to: Coordinates) -> i32 {
-        (to.x as i32 - from.x as i32) + (to.y as i32 - from.y as i32)
+        (to.x as i32 - from.x as i32).abs() + (to.y as i32 - from.y as i32).abs()
     }
 }
