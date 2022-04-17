@@ -2,7 +2,6 @@ use bevy::{log, prelude::Entity};
 
 use crate::resources::{
     board::Board,
-    card::Card,
     deck::Deck,
     game_state::{GameState, PlayerColor},
     tile_map::{Move, MoveResult},
@@ -143,7 +142,7 @@ impl AlphaBetaAgent {
 }
 
 impl Agent for AlphaBetaAgent {
-    fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move) {
+    fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move, i32) {
         let mut positions = 0;
 
         let result = self.alpha_beta(
@@ -160,7 +159,7 @@ impl Agent for AlphaBetaAgent {
         log::info!("Evaluation score: {:?}", result.best_score);
         log::info!("Analyzed over {:?} positions", positions);
 
-        (result.best_card.unwrap(), result.best_move.unwrap())
+        (result.best_card.unwrap(), result.best_move.unwrap(), result.best_score)
     }
 
     fn clone_dyn(&self) -> Box<dyn Agent> {

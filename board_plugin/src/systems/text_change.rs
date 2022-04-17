@@ -3,12 +3,12 @@ use bevy::{log, prelude::EventReader};
 use crate::{
     components::{
         guide_text_timer::GuideTextTimer,
-        texts::{GuideText, TurnText},
+        texts::{GuideText, TurnText, EvaluationText},
     },
     events::ChangeGuideTextEvent,
     resources::{
         board_assets::BoardAssets,
-        game_state::{GameState, PlayerColor},
+        game_state::{GameState, PlayerColor}, text_handler::EvaluationResult,
     },
 };
 
@@ -91,9 +91,10 @@ pub fn change_turn_text(
                             },
                         }];
                         log::info!("Changed a turn text to {}", value);
+                        break;
                     }
                     Err(e) => {
-                        log::error!("An error in changing guide text occured: {:?}", e);
+                        log::error!("An error in changing turn text occured: {:?}", e);
                         continue;
                     }
                 }
@@ -101,3 +102,42 @@ pub fn change_turn_text(
         }
     }
 }
+
+pub fn change_evaluation_text(
+    evaluation_result: Res<EvaluationResult>,
+    board_assets: Res<BoardAssets>,
+    parents_q: Query<&Children, With<EvaluationText>>,
+    mut text_q: Query<&mut Text>,
+) {
+    if evaluation_result.is_changed() {
+
+        let (value, color) = match evaluation_result.score > 0 {
+            true => (evaluation_result.to_string(), Color::RED),
+            false => (evaluation_result.to_string(), Color::BLUE),
+        };
+
+        for children_components in parents_q.iter() {
+            for child_entity in children_components.iter() {
+                match text_q.get_mut(*child_entity) {
+                    Ok(mut text) => {
+                        text.sections = vec![TextSection {
+                            value: value.clone(),
+                            style: TextStyle {
+                                color: color,
+                                font: board_assets.font.clone(),
+                                font_size: board_assets.turn_text_size,
+                            },
+                        }];
+                        log::info!("Changed evaluation text to {}", value);
+                        break;
+                    }
+                    Err(e) => {
+                        log::error!("An error in changing evaluation text occured: {:?}", e);
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+}
+

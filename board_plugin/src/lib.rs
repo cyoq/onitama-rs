@@ -34,7 +34,7 @@ use crate::ai::random_agent::RandomAgent;
 use crate::bounds::Bounds2;
 use crate::components::card_board::{CardBoard, CardOwner};
 use crate::components::card_index::CardIndex;
-use crate::components::texts::{GuideText, TurnText};
+use crate::components::texts::{EvaluationText, GuideText, TurnText};
 use crate::events::{
     BotMakeMoveEvent, CardSwapEvent, ChangeGuideTextEvent, ColorSelectedCardEvent,
     ColorSelectedPieceEvent, GenerateAllowedMovesEvent, GenerateBotMoveEvent, MirrorCardEvent,
@@ -47,7 +47,7 @@ use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
 use crate::resources::game_state::{Player, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
-use crate::resources::text_handler::TextHandler;
+use crate::resources::text_handler::{EvaluationResult, TextHandler};
 use crate::resources::tile_map::TileMap;
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::InspectableRegistry;
@@ -267,7 +267,7 @@ impl<T> BoardPlugin<T> {
             .insert(TurnText)
             .insert(Transform::from_translation(Vec3::new(
                 -window.width / 2. + window.width / 8.,
-                window.height / 2.5,
+                window.height / 2.4,
                 1.,
             )))
             .insert(GlobalTransform::default())
@@ -283,9 +283,37 @@ impl<T> BoardPlugin<T> {
             })
             .id();
 
+        let evaluation_result = EvaluationResult::default();
+
+        // create evaluation text
+        let evaluation_text = commands
+            .spawn()
+            .insert(Name::new("Evaluation text"))
+            .insert(EvaluationText)
+            .insert(Transform::from_translation(Vec3::new(
+                -window.width / 2. + window.width / 8. + 10.,
+                window.height / 2.4 - board_assets.turn_text_size,
+                1.,
+            )))
+            .insert(GlobalTransform::default())
+            .with_children(|parent| {
+                Self::spawn_text(
+                    parent,
+                    evaluation_result.to_string(),
+                    &board_assets,
+                    board_assets.turn_text_size,
+                    Vec2::new(0., 0.),
+                    Color::WHITE,
+                );
+            })
+            .id();
+
+        commands.insert_resource(evaluation_result);
+
         commands.insert_resource(TextHandler {
             turn_text,
             guide_text,
+            evaluation_text,
         });
 
         let red_agent: Box<dyn Agent> = match selected_players.red_player {
@@ -615,12 +643,16 @@ impl<T> BoardPlugin<T> {
 
         commands.entity(text_handler.turn_text).despawn_recursive();
         commands.entity(text_handler.guide_text).despawn_recursive();
+        commands
+            .entity(text_handler.evaluation_text)
+            .despawn_recursive();
         commands.remove_resource::<TextHandler>();
 
         commands.remove_resource::<SelectedPiece>();
         commands.remove_resource::<SelectedCard>();
 
         commands.remove_resource::<GameState>();
+        commands.remove_resource::<EvaluationResult>();
     }
 }
 
@@ -656,6 +688,7 @@ impl<T: StateData> Plugin for BoardPlugin<T> {
                         .label("bot_generate_move")
                         .after("next_turn_event"),
                 )
+                .with_system(systems::text_change::change_evaluation_text)
                 .with_system(
                     systems::ai_input::bot_make_move::<T>
                         .label("bot_make_move")

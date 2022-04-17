@@ -6,7 +6,7 @@ use crate::{
     },
     resources::{
         board::Board, board_assets::BoardAssets, deck::Deck, game_state::GameState,
-        tile_map::MoveResult,
+        tile_map::MoveResult, text_handler::EvaluationResult,
     },
     BoardPlugin,
 };
@@ -16,20 +16,25 @@ pub fn generate_bot_move(
     board: Res<Board>,
     game_state: Res<GameState>,
     deck: Res<Deck>,
+    mut evaluation_result: ResMut<EvaluationResult>,
     mut random_bot_move_rdr: EventReader<GenerateBotMoveEvent>,
     mut bot_make_move_ewr: EventWriter<BotMakeMoveEvent>,
 ) {
     for _ in random_bot_move_rdr.iter() {
         let current_player = game_state.get_current_player();
-        let (card, mov) = current_player
+        let (card, mov, score) = current_player
             .agent
             .generate_move(&board, &game_state, &deck);
 
+        evaluation_result.score = score;
+
         log::info!(
-            "Bot move is {:?} and used card is {:?}",
+            "Bot move is {:?} and used card is {:?} and score is {:?}",
             mov,
-            deck.cardboards.get(&card).unwrap().card.name
+            deck.cardboards.get(&card).unwrap().card.name,
+            score
         );
+
         bot_make_move_ewr.send(BotMakeMoveEvent {
             mov: mov,
             card_used: card,

@@ -13,7 +13,7 @@ impl Agent for Human {
         _board: &Board,
         _game_state: &GameState,
         _deck: &Deck,
-    ) -> (Entity, Move) {
+    ) -> (Entity, Move, i32) {
         unimplemented!("This function should not be implemented, because human generates move via interface");
     }
 
