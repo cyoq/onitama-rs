@@ -8,6 +8,7 @@ use board_plugin::resources::app_state::AppState;
 use board_plugin::resources::board_assets::{BoardAssets, SpriteMaterial};
 use board_plugin::resources::board_options::{BoardOptions, TileSize};
 use board_plugin::resources::deck_options::DeckOptions;
+use board_plugin::resources::depth::Depth;
 use board_plugin::resources::physical_deck::PhysicalDeck;
 use board_plugin::resources::selected::SelectedPlayers;
 use board_plugin::BoardPlugin;
@@ -25,6 +26,7 @@ fn main() {
 
     app.insert_resource(PhysicalDeck::new());
     app.insert_resource(SelectedPlayers::default());
+    app.insert_resource(Depth::default());
 
     app.add_state(AppState::MainMenu);
     app.add_plugin(MainMenuPlugin);

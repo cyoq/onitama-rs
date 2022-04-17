@@ -9,6 +9,7 @@ use crate::{
         board_options::{BoardOptions, TileSize},
         card::CARDS,
         deck_options::DeckOptions,
+        depth::Depth,
         game_state::{PlayerColor, PlayerType},
         physical_deck::PhysicalDeck,
         selected::SelectedPlayers,
@@ -24,6 +25,7 @@ struct MainMenuData {
     // bounds are needed to color the background
     cards: Vec<(Entity, Bounds2)>,
     button_root: Entity,
+    depth_counter_root: Entity,
 }
 
 pub struct MainMenuPlugin;
@@ -41,12 +43,15 @@ impl Plugin for MainMenuPlugin {
                 .with_system(reset_selected_cards)
                 .with_system(button_press_system)
                 .with_system(list_press_system)
-                .with_system(update_button_color),
+                .with_system(update_button_color)
+                .with_system(depth_button_press_system)
+                .with_system(update_depth_counter),
         )
         .add_system_set(SystemSet::on_exit(AppState::MainMenu).with_system(cleanup));
 
         app.add_event::<ResetSelectedCardsEvent>();
         app.add_event::<UpdateButtonColorEvent>();
+        app.add_event::<UpdateDepthCounterEvent>();
     }
 }
 
@@ -113,6 +118,52 @@ fn button_system(
             Interaction::Hovered => *material = materials.button_hovered.into(),
             Interaction::None => *material = materials.button_normal.into(),
         }
+    }
+}
+
+struct UpdateDepthCounterEvent;
+
+fn depth_button_press_system(
+    buttons: Query<(&Interaction, &DepthButtonAction), (Changed<Interaction>, With<Button>)>,
+    mut depth: ResMut<Depth>,
+    mut update_depth_counter_ewr: EventWriter<UpdateDepthCounterEvent>,
+) {
+    for (interaction, button) in buttons.iter() {
+        if *interaction == Interaction::Clicked {
+            match button {
+                DepthButtonAction::Increase => {
+                    #[cfg(feature = "debug")]
+                    log::info!("Added 1 to the depth {:?}", depth);
+                    depth.add();
+                }
+                DepthButtonAction::Decrease => {
+                    #[cfg(feature = "debug")]
+                    log::info!("Subtracted 1 from the depth {:?}", depth);
+                    depth.sub();
+                }
+            };
+            update_depth_counter_ewr.send(UpdateDepthCounterEvent);
+        }
+    }
+}
+
+fn update_depth_counter(
+    depth: Res<Depth>,
+    mut texts: Query<&mut Text, With<DepthCounter>>,
+    board_assets: Res<BoardAssets>,
+    mut update_depth_counter_rdr: EventReader<UpdateDepthCounterEvent>,
+) {
+    for _ in update_depth_counter_rdr.iter() {
+        let mut text = texts.get_single_mut().expect("Expected one depth counter");
+        *text = Text::with_section(
+            depth.to_string(),
+            TextStyle {
+                font: board_assets.font.clone(),
+                font_size: 30.,
+                color: Color::WHITE,
+            },
+            Default::default(),
+        );
     }
 }
 
@@ -218,7 +269,7 @@ fn button_press_system(
                         physical_deck.take_some_random_cards(&res);
                     }
                     state.set(AppState::InProgress).unwrap();
-                },
+                }
                 ButtonAction::ClearSelectedCards => {
                     log::info!("Clear selected");
                     reset_selected_cards_ewr.send(ResetSelectedCardsEvent);
@@ -313,9 +364,11 @@ fn setup_ui<T>(
     window: Res<WindowDescriptor>,
     board_assets: Res<BoardAssets>,
     board_options: Res<BoardOptions>,
+    mut depth: ResMut<Depth>,
     mut physical_deck: ResMut<PhysicalDeck>,
 ) {
     physical_deck.clear();
+    *depth = Depth::default();
     let camera_entity = commands.spawn_bundle(UiCameraBundle::default()).id();
 
     let button_materials = MenuMaterials {
@@ -488,6 +541,30 @@ fn setup_ui<T>(
         })
         .id();
 
+    let depth_counter_root = commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(4.)),
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    left: Val::Px(0.0),
+                    top: Val::Px(window.height * 0.26),
+                    ..Default::default()
+                },
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..Default::default()
+            },
+            color: Color::rgb(0.1, 0.1, 0.1).into(),
+            ..Default::default()
+        })
+        .insert(Name::new("Depth counter root"))
+        .with_children(|parent| {
+            let font = asset_server.load("fonts/pixeled.ttf");
+            setup_depth_counter(&depth, &button_materials, parent, font.clone());
+        })
+        .id();
+
     // generating the cards
     let mut cards: Vec<(Entity, Bounds2)> = Vec::with_capacity(CARDS.len());
     let offset = window.width / 18.;
@@ -580,7 +657,174 @@ fn setup_ui<T>(
         player_list_root,
         cards,
         button_root,
+        depth_counter_root,
     });
+}
+
+#[derive(Debug, Component)]
+enum DepthButtonAction {
+    Increase,
+    Decrease,
+}
+
+#[derive(Component)]
+struct DepthCounter;
+
+fn setup_depth_counter(
+    depth: &Depth,
+    button_materials: &MenuMaterials,
+    parent: &mut ChildBuilder,
+    font: Handle<Font>,
+) {
+    // Depth text
+    parent
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(50.), Val::Auto),
+                margin: Rect::all(Val::Px(10.)),
+                // horizontally center child text
+                justify_content: JustifyContent::FlexStart,
+                // vertically center child text
+                align_items: AlignItems::Center,
+                ..Default::default()
+            },
+            color: Color::rgb(0.1, 0.1, 0.1).into(),
+            ..Default::default()
+        })
+        .insert(Name::new("Depth counter"))
+        .with_children(|builder| {
+            builder.spawn_bundle(TextBundle {
+                text: Text {
+                    sections: vec![TextSection {
+                        value: "Search depth: ".to_owned(),
+                        style: TextStyle {
+                            font: font.clone(),
+                            font_size: 40.,
+                            color: Color::WHITE,
+                        },
+                    }],
+                    alignment: TextAlignment {
+                        vertical: VerticalAlign::Center,
+                        horizontal: HorizontalAlign::Center,
+                    },
+                },
+                ..Default::default()
+            });
+
+            // "-" button
+            builder
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        flex_shrink: 0.,
+                        size: Size::new(Val::Percent(10.), Val::Px(20.)),
+                        margin: Rect {
+                            left: Val::Auto,
+                            right: Val::Auto,
+                            ..Default::default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    color: button_materials.button_normal.into(),
+                    ..Default::default()
+                })
+                .insert(DepthButtonAction::Decrease)
+                .insert(SimpleButton)
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        style: Style {
+                            flex_shrink: 0.,
+                            size: Size::new(Val::Undefined, Val::Px(20.)),
+                            margin: Rect {
+                                left: Val::Auto,
+                                right: Val::Auto,
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        },
+                        text: Text::with_section(
+                            "-",
+                            TextStyle {
+                                font: font.clone(),
+                                font_size: 30.,
+                                color: Color::WHITE,
+                            },
+                            Default::default(),
+                        ),
+                        ..Default::default()
+                    });
+                });
+
+            // depth counter
+            builder
+                .spawn_bundle(TextBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(20.), Val::Px(20.)),
+                        margin: Rect {
+                            left: Val::Auto,
+                            right: Val::Auto,
+                            ..Default::default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    text: Text::with_section(
+                        depth.to_string(),
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 30.,
+                            color: Color::WHITE,
+                        },
+                        Default::default(),
+                    ),
+                    ..Default::default()
+                })
+                .insert(DepthCounter);
+
+            // "+" button
+            builder
+                .spawn_bundle(ButtonBundle {
+                    style: Style {
+                        flex_shrink: 0.,
+                        size: Size::new(Val::Percent(10.), Val::Px(20.)),
+                        margin: Rect {
+                            left: Val::Auto,
+                            right: Val::Auto,
+                            ..Default::default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        ..Default::default()
+                    },
+                    color: button_materials.button_normal.into(),
+                    ..Default::default()
+                })
+                .insert(DepthButtonAction::Increase)
+                .insert(SimpleButton)
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        style: Style {
+                            flex_shrink: 0.,
+                            size: Size::new(Val::Undefined, Val::Px(20.)),
+                            margin: Rect {
+                                left: Val::Auto,
+                                right: Val::Auto,
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        },
+                        text: Text::with_section(
+                            "+",
+                            TextStyle {
+                                font: font.clone(),
+                                font_size: 30.,
+                                color: Color::WHITE,
+                            },
+                            Default::default(),
+                        ),
+                        ..Default::default()
+                    });
+                });
+        });
 }
 
 fn setup_single_list(
@@ -755,6 +999,9 @@ fn cleanup(mut commands: Commands, menu_data: Res<MainMenuData>) {
         .entity(menu_data.player_list_root)
         .despawn_recursive();
     commands.entity(menu_data.button_root).despawn_recursive();
+    commands
+        .entity(menu_data.depth_counter_root)
+        .despawn_recursive();
     commands.entity(menu_data.camera_entity).despawn_recursive();
 
     for (entity, _) in menu_data.cards.iter() {

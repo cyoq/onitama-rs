@@ -23,6 +23,7 @@ use resources::board_assets::BoardAssets;
 use resources::board_options::BoardOptions;
 use resources::card::Card;
 use resources::deck_options::DeckOptions;
+use resources::depth::Depth;
 use resources::game_state::{GameState, PlayerColor};
 use resources::physical_deck::PhysicalDeck;
 use resources::selected::SelectedPlayers;
@@ -43,7 +44,6 @@ use crate::events::{
 };
 use crate::menu_plugin::ListElement;
 use crate::resources::board_options::TileSize;
-use crate::resources::card::CARDS;
 use crate::resources::deck::Deck;
 use crate::resources::game_state::{Player, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
@@ -70,6 +70,7 @@ impl<T> BoardPlugin<T> {
         selected_players: Res<SelectedPlayers>,
         board_assets: Res<BoardAssets>,
         physical_deck: Res<PhysicalDeck>,
+        depth: Res<Depth>
     ) {
         let options = match board_options {
             Some(opt) => opt.clone(),
@@ -319,13 +320,13 @@ impl<T> BoardPlugin<T> {
         let red_agent: Box<dyn Agent> = match selected_players.red_player {
             PlayerType::Human => Box::new(Human),
             PlayerType::Random => Box::new(RandomAgent),
-            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 7 }),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: depth.0 }),
         };
 
         let blue_agent: Box<dyn Agent> = match selected_players.blue_player {
             PlayerType::Human => Box::new(Human),
             PlayerType::Random => Box::new(RandomAgent),
-            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: 7 }),
+            PlayerType::AlphaBeta => Box::new(AlphaBetaAgent { max_depth: depth.0 }),
         };
 
         let red_player = Player {
