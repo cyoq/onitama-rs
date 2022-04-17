@@ -156,12 +156,20 @@ impl TileMap {
         // we can be sure that the start tile must have a piece
         let start_piece = start_tile.piece.unwrap();
 
+        // win after capture
         if let Some(end_piece) = end_tile.piece {
             let mut result = MoveResult::Move;
             if start_piece.color != end_piece.color && end_piece.kind == King {
                 result = MoveResult::Win;
             } else if start_piece.color != end_piece.color {
                 result = MoveResult::Capture;
+                // if capturing with the win
+                if start_piece.kind == King && start_piece.color == Red && end == BLUE_TEMPLE {
+                    result = MoveResult::Win;
+                } else if start_piece.kind == King && start_piece.color == Blue && end == RED_TEMPLE
+                {
+                    result = MoveResult::Win;
+                }
             }
 
             self.map[end.y as usize][end.x as usize] = self.map[start.y as usize][start.x as usize];
@@ -172,6 +180,7 @@ impl TileMap {
         self.map[start.y as usize][start.x as usize].piece = None;
         self.map[end.y as usize][end.x as usize] = start_tile;
 
+        // if the end piece is the empty tile and it is a temple
         let end_tile = self.map[end.y as usize][end.x as usize];
         if let Some(piece) = end_tile.piece {
             if piece.kind == King && piece.color == Red && end == BLUE_TEMPLE {
