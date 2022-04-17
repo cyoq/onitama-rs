@@ -53,11 +53,7 @@ fn camera_setup(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-fn setup_board(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut state: ResMut<State<AppState>>,
-) {
+fn setup_board(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Board plugin options
     commands.insert_resource(BoardOptions {
         tile_padding: 3.0,
@@ -83,6 +79,10 @@ fn setup_board(
         },
         tile_material: SpriteMaterial {
             color: Color::DARK_GRAY,
+            ..Default::default()
+        },
+        temple_tile_material: SpriteMaterial {
+            color: Color::rgb(0.35, 0.45, 0.35),
             ..Default::default()
         },
         blue_pawn_material: SpriteMaterial {

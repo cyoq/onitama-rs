@@ -27,6 +27,8 @@ use resources::depth::Depth;
 use resources::game_state::{GameState, PlayerColor};
 use resources::physical_deck::PhysicalDeck;
 use resources::selected::SelectedPlayers;
+use resources::tile::TempleTile;
+use resources::tile_map::{RED_TEMPLE, BLUE_TEMPLE};
 
 use crate::ai::agent::Agent;
 use crate::ai::alpha_beta::AlphaBetaAgent;
@@ -70,7 +72,7 @@ impl<T> BoardPlugin<T> {
         selected_players: Res<SelectedPlayers>,
         board_assets: Res<BoardAssets>,
         physical_deck: Res<PhysicalDeck>,
-        depth: Res<Depth>
+        depth: Res<Depth>,
     ) {
         let options = match board_options {
             Some(opt) => opt.clone(),
@@ -397,11 +399,18 @@ impl<T> BoardPlugin<T> {
                     );
                 }
 
+                let tile_color = match coordinates {
+                    RED_TEMPLE | BLUE_TEMPLE => {
+                        board_assets.temple_tile_material.color
+                    }
+                    _ => board_assets.tile_material.color,
+                };
+
                 // Creating a tile on the board
                 let mut cmd = parent.spawn();
-                cmd.insert_bundle(SpriteBundle {
+                let tile_builder = cmd.insert_bundle(SpriteBundle {
                     sprite: Sprite {
-                        color: board_assets.tile_material.color,
+                        color: tile_color,
                         custom_size: Some(Vec2::splat(tile_size - padding)),
                         ..Default::default()
                     },
@@ -416,6 +425,10 @@ impl<T> BoardPlugin<T> {
                 // We add the `Coordinates` component to our tile entity
                 .insert(coordinates)
                 .insert(BoardTile);
+
+                if coordinates == RED_TEMPLE || coordinates == BLUE_TEMPLE {
+                    tile_builder.insert(TempleTile);
+                }
 
                 // Creating a pawn or a king square
                 Self::spawn_a_piece(tile.piece, &mut cmd, board_assets, tile_size, padding);

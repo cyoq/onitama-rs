@@ -1,7 +1,11 @@
+use bevy::prelude::Component;
 #[cfg(feature = "debug")]
 use colored::Colorize;
 
 use crate::components::pieces::Piece;
+
+#[derive(Debug, Component)]
+pub struct TempleTile;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Tile {
@@ -15,8 +19,8 @@ impl Tile {
 
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
-        use crate::resources::game_state::PlayerColor::*;
         use crate::components::pieces::PieceKind::*;
+        use crate::resources::game_state::PlayerColor::*;
         format!(
             "{}",
             match self.piece {

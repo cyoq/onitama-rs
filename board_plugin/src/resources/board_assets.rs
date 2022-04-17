@@ -28,6 +28,8 @@ pub struct BoardAssets {
     ///
     pub tile_material: SpriteMaterial,
     ///
+    pub temple_tile_material: SpriteMaterial,
+    ///
     pub blue_pawn_material: SpriteMaterial,
     ///
     pub blue_king_material: SpriteMaterial,

@@ -15,6 +15,7 @@ use crate::resources::board_assets::BoardAssets;
 use crate::resources::deck::Deck;
 use crate::resources::game_state::{GameState, PlayerColor, PlayerType};
 use crate::resources::selected::{SelectedCard, SelectedPiece};
+use crate::resources::tile::TempleTile;
 use crate::resources::tile_map::MoveResult;
 use crate::BoardPlugin;
 use bevy::input::{mouse::MouseButtonInput, ElementState};
@@ -245,13 +246,13 @@ pub fn generate_allowed_moves(
 pub fn reset_allowed_moves(
     mut commands: Commands,
     board_assets: Res<BoardAssets>,
-    mut tiles_q: Query<(Entity, &mut Sprite), With<AllowedMove>>,
+    mut tiles_q: Query<(Entity, &mut Sprite, Option<&TempleTile>), With<AllowedMove>>,
     children_q: Query<&Children, With<BoardTile>>,
     mut visibility_q: Query<&mut Visibility>,
     mut reset_allowed_moves_event: EventReader<ResetAllowedMovesEvent>,
 ) {
     for _ in reset_allowed_moves_event.iter() {
-        for (entity, mut sprite) in tiles_q.iter_mut() {
+        for (entity, mut sprite, temple) in tiles_q.iter_mut() {
             if let Ok(children) = children_q.get(entity) {
                 for child in children.iter() {
                     if let Ok(mut visibility) = visibility_q.get_mut(*child) {
@@ -259,7 +260,12 @@ pub fn reset_allowed_moves(
                     }
                 }
             }
-            sprite.color = board_assets.tile_material.color;
+            if temple.is_none() {
+                sprite.color = board_assets.tile_material.color;
+            } else {
+                sprite.color = board_assets.temple_tile_material.color;
+            }
+            
             commands.entity(entity).remove::<AllowedMove>();
         }
     }
