@@ -7,3 +7,8 @@ Onitama game in Bevy engine for university project in AI subject
 - Félix de Maneville(Qongzi). [Bevy Minesweeper](https://dev.to/qongzi/bevy-minesweeper-introduction-4l7f)
 - [Chessprogramming](https://www.chessprogramming.org/)
 - maxbennedich. [onitama](https://github.com/maxbennedich/onitama)
+
+## Fonts
+
+- [Orange Kid](https://www.1001fonts.com/orange-kid-font.html)
+- [Pixeled]()

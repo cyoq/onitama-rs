@@ -18,7 +18,7 @@ fn main() {
 
     app.insert_resource(WindowDescriptor {
         width: 1320.,
-        height: 960.,
+        height: 940.,
         title: "Onitama in Rust".to_string(),
         ..Default::default()
     })

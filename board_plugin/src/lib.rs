@@ -44,6 +44,7 @@ use crate::events::{
     MovePieceEvent, NextTurnEvent, NoCardSelectedEvent, PieceSelectEvent, ProcessWinConditionEvent,
     ResetAllowedMovesEvent, ResetSelectedCardColorEvent, ResetSelectedPieceColorEvent,
 };
+#[cfg(feature = "debug")]
 use crate::menu_plugin::ListElement;
 use crate::resources::board_options::TileSize;
 use crate::resources::deck::Deck;
@@ -369,8 +370,8 @@ impl<T> BoardPlugin<T> {
                     y: y as u8,
                 };
 
-                // print letters to the left of the board
-                if coordinates.x == 0 {
+                // print numbers to the left of the board
+                if coordinates.y == 0 {
                     Self::spawn_text(
                         parent,
                         String::from((101 - y) as u8 as char),
@@ -384,8 +385,8 @@ impl<T> BoardPlugin<T> {
                     );
                 }
 
-                // print numbers below the board
-                if coordinates.y == 0 {
+                // print letters below the board
+                if coordinates.x == 0 {
                     Self::spawn_text(
                         parent,
                         (x + 1).to_string(),

@@ -434,7 +434,7 @@ fn setup_ui<T>(
                                 value: "Onitama".to_string(),
                                 style: TextStyle {
                                     font: font.clone(),
-                                    font_size: 60.,
+                                    font_size: 80.,
                                     color: Color::WHITE,
                                 },
                             }],
@@ -468,7 +468,7 @@ fn setup_ui<T>(
         })
         .insert(Name::new("Description text"))
         .with_children(|parent| {
-            let font = asset_server.load("fonts/pixeled.ttf");
+            let font = asset_server.load("fonts/orange_kid.ttf");
 
             parent
                 .spawn_bundle(NodeBundle {
@@ -486,10 +486,14 @@ fn setup_ui<T>(
                     builder.spawn_bundle(TextBundle {
                         text: Text {
                             sections: vec![TextSection {
-                                value: "Welcome to the game of Onitama! This game is created as a university project. The author is cyoq. ".to_string(),
+                                value: "
+Welcome to the game of Onitama! Rules of the game can be found online. The author is cyoq and the game is on a Github: https://github.com/cyoq/onitama-rs
+In this menu you can choose the first and the second player types. Search depth is appliable only to AlphaBeta.
+Select the cards for the red and blue players and one neutral card. If the amount of cards is not 5, it will be replenished with the random cards. Have a good game!
+                                ".to_string(),
                                 style: TextStyle {
                                     font: font.clone(),
-                                    font_size: 30.,
+                                    font_size: 24.,
                                     color: Color::WHITE,
                                 },
                             }],

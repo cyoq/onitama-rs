@@ -4,7 +4,7 @@ pub struct Depth(pub u8);
 
 impl Depth {
     pub fn add(&mut self) {
-        if self.0 + 1 <= 12 {
+        if self.0 + 1 <= 10 {
             self.0 += 1;
         }
     }
