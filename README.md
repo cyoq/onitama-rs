@@ -1,6 +1,7 @@
 # onitama-rs
 Onitama game in Bevy engine for university project in AI subject
 
+**Play the game online with the WASM build**: https://cyoq.github.io/onitama-rs/
 
 # WASM
 
