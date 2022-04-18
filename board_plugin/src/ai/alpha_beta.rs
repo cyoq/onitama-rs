@@ -147,7 +147,7 @@ impl Agent for AlphaBetaAgent {
         board: &Board,
         game_state: &GameState,
         deck: &Deck,
-    ) -> (Entity, Move, i32) {
+    ) -> (Option<Entity>, Option<Move>, i32) {
         let mut positions = 0;
 
         let result = self.alpha_beta(
@@ -165,8 +165,8 @@ impl Agent for AlphaBetaAgent {
         log::info!("Analyzed over {:?} positions", positions);
 
         (
-            result.best_card.unwrap(),
-            result.best_move.unwrap_or_default(),
+            result.best_card,
+            result.best_move,
             result.best_score,
         )
     }

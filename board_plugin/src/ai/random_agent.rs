@@ -9,7 +9,7 @@ use super::agent::Agent;
 pub struct RandomAgent;
 
 impl Agent for RandomAgent {
-    fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Entity, Move, i32) {
+    fn generate_move(&self, board: &Board, game_state: &GameState, deck: &Deck) -> (Option<Entity>, Option<Move>, i32) {
         let all_moves = board
             .tile_map
             .generate_all_possible_moves(&game_state, &deck);
@@ -22,7 +22,7 @@ impl Agent for RandomAgent {
         let mov = &moves.moves[mov_idx];
         log::info!("Random bot chose a move {:?}", mov);
 
-        (moves.card, *mov, 0)
+        (Some(moves.card), Some(*mov), 0)
     }
 
     fn clone_dyn(&self) -> Box<dyn Agent> {

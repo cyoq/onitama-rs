@@ -28,6 +28,14 @@ pub fn generate_bot_move(
 
         evaluation_result.score = score;
 
+        if card.is_none() || mov.is_none() {
+            log::info!("Card or move is None!");
+            return;
+        }
+
+        let card = card.unwrap();
+        let mov = mov.unwrap();
+
         log::info!(
             "Bot move is {:?} and used card is {:?} and score is {:?}",
             mov,

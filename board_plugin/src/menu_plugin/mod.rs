@@ -573,7 +573,7 @@ fn setup_ui<T>(
 
     // moving pivot from the center to the left bottom part of the screen from screen center
     let pivot = Vec2::new(-window.width / 2., -window.height / 2.);
-    // 26% are taken by the UI
+    // 36% are taken by the UI
     let starting_y = pivot.y + window.height * 0.64 - board_size.y + offset;
     let starting_x = pivot.x + 1.5 * offset;
 
