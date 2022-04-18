@@ -371,10 +371,10 @@ impl<T> BoardPlugin<T> {
                 };
 
                 // print numbers to the left of the board
-                if coordinates.y == 0 {
+                if coordinates.x == 0 {
                     Self::spawn_text(
                         parent,
-                        String::from((101 - y) as u8 as char),
+                        (y + 1).to_string(),
                         board_assets,
                         tile_size,
                         Vec2::new(
@@ -386,10 +386,10 @@ impl<T> BoardPlugin<T> {
                 }
 
                 // print letters below the board
-                if coordinates.x == 0 {
+                if coordinates.y == 0 {
                     Self::spawn_text(
                         parent,
-                        (x + 1).to_string(),
+                        String::from((97 + x) as u8 as char),
                         board_assets,
                         tile_size,
                         Vec2::new(
