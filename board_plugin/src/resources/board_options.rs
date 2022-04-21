@@ -1,6 +1,7 @@
 use bevy::math::Vec3;
 use serde::{Deserialize, Serialize};
 
+// Was taken from here: https://dev.to/qongzi/bevy-minesweeper-part-3-1a9a
 /// Tile size option
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TileSize {

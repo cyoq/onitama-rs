@@ -2,6 +2,7 @@ use bevy::prelude::Component;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Add, Sub};
 
+// Big part is taken from https://dev.to/qongzi/bevy-minesweeper-part-2-1hi5
 #[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
 pub struct Coordinates {

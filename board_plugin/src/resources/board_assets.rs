@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::render::texture::DEFAULT_IMAGE_HANDLE;
 
+// Was taken from here: https://dev.to/qongzi/bevy-minesweeper-part-3-1a9a
+
 #[derive(Debug, Clone)]
 pub struct SpriteMaterial {
     pub color: Color,

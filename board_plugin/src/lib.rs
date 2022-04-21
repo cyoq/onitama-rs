@@ -7,6 +7,8 @@ pub mod menu_plugin;
 pub mod resources;
 pub mod systems;
 
+// Overall structure is inherited from this tutorial: https://dev.to/qongzi/bevy-minesweeper-introduction-4l7f
+
 use bevy::ecs::schedule::StateData;
 use bevy::ecs::system::EntityCommands;
 use bevy::log;

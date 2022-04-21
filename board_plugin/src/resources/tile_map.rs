@@ -107,6 +107,8 @@ impl TileMap {
         Self { height, width, map }
     }
 
+    // This function was completely fully copied from here: https://dev.to/qongzi/bevy-minesweeper-part-2-1hi5
+    // because it saved the time and was convenient to use
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
         let mut buffer = format!("Board ({}, {}):\n", self.width, self.height);
